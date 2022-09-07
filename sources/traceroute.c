@@ -6,7 +6,7 @@
 /*   By: lumenthi <lumenthi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/07 16:02:47 by lumenthi          #+#    #+#             */
-/*   Updated: 2022/09/07 19:29:14 by lumenthi         ###   ########.fr       */
+/*   Updated: 2022/09/07 22:23:18 by lumenthi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,20 +28,19 @@ static struct addrinfo *resolve(char *host)
 	return res;
 }
 
-static int host_informations(t_data *g_data_addr)
+static int host_informations(t_data *g_data)
 {
-	t_data g_data = *g_data_addr;
-	struct addrinfo *ret = g_data.host_info;
+	struct addrinfo *ret = g_data->host_info;
 
 	if (!(inet_ntop(AF_INET,
 					&((const struct sockaddr_in *)ret->ai_addr)->sin_addr,
-					g_data.ipv4,
-					sizeof(g_data.ipv4))))
+					g_data->ipv4,
+					sizeof(g_data->ipv4))))
 	{
 		return 1;
 	}
 	else {
-		g_data.host_addr = ret->ai_addr;
+		g_data->host_addr = ret->ai_addr;
 		return 0;
 	}
 	return 0;
