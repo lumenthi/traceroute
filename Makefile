@@ -6,7 +6,7 @@
 #    By: lumenthi <lumenthi@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2017/12/22 14:06:43 by lumenthi          #+#    #+#              #
-#    Updated: 2022/09/07 16:05:50 by lumenthi         ###   ########.fr        #
+#    Updated: 2022/09/07 17:28:44 by lumenthi         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -50,7 +50,8 @@ HEADERS = $(addprefix $(HEADDIR)/, $(HEADS))
 
 ###### SOURCES ######
 
-SRCS = traceroute.c
+SRCS = traceroute.c \
+		main.c
 
 SOURCES = $(addprefix $(SRCDIR)/, $(SRCS))
 
