@@ -6,7 +6,7 @@
 /*   By: lumenthi <lumenthi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/08/20 11:05:20 by lumenthi          #+#    #+#             */
-/*   Updated: 2022/09/08 17:28:07 by lumenthi         ###   ########.fr       */
+/*   Updated: 2022/09/08 18:09:51 by lumenthi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,13 +39,10 @@ unsigned short checksum(void *b, int len)
 	return result;
 }
 
-static void print_packet(struct icmp_packet packet, struct sockaddr_in *receiver, t_data *g_data)
+static void print_packet(struct packet full_packet, struct sockaddr_in *receiver, t_data *g_data)
 {
-	struct packet *full_packet = (struct packet *)&packet;
-	(void)full_packet;
-	// printf("%d\n", full_packet->hdr.protocol);
-	// printf("%d\n", full_packet->hdr.saddr);
-	// printf("%d\n", full_packet->hdr.daddr);
+	printf("%d\n", full_packet.ip_hdr.ttl);
+	printf("%d\n", full_packet.content.hdr.type);
 
 	printf(" %d  %s (%s)\n",
 		g_data->sequence, inet_ntoa(receiver->sin_addr), inet_ntoa(receiver->sin_addr));
@@ -54,19 +51,16 @@ static void print_packet(struct icmp_packet packet, struct sockaddr_in *receiver
 static int monitor_packet(t_data *g_data, int ttl)
 {
 	struct icmp_packet		icmp_packet;
+	struct packet			full_packet;
 	struct sockaddr			receiver;
 	socklen_t				receiver_len;
 
 	/* Setting TTL option */
-	printf("* ttl %d *\n", ttl);
 	if (setsockopt(g_data->sockfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl)) != 0) {
 		fprintf(stderr, "%s: %s: Failed to set TTL\n", g_data->path, g_data->address);
 		freeaddrinfo(g_data->host_info);
 		return 1;
 	}
-
-	printf("traceroute to %s (%s), %d hops max, %ld bytes packets\n",
-		g_data->address, g_data->ipv4, g_data->hops, sizeof(icmp_packet));
 
 	/* Formatting packet header */
 	ft_memset(&icmp_packet, 0, sizeof(icmp_packet));
@@ -87,33 +81,37 @@ static int monitor_packet(t_data *g_data, int ttl)
 	}
 
 	/* Formatting receivers */
-	ft_memset(&icmp_packet, 0, sizeof(icmp_packet));
+	ft_memset(&full_packet, 0, sizeof(full_packet));
 	receiver_len = sizeof(receiver);
 	ft_memset(&receiver, 0, receiver_len);
 	/* Sent packet, incrementing sequence number */
 	g_data->sequence++;
 
 	if (recvfrom(g_data->sockfd,
-				&icmp_packet,
-				sizeof(icmp_packet),
+				&full_packet,
+				sizeof(full_packet),
 				0,
 				&receiver,
-				&receiver_len) <= 0 && g_data->sequence > 0)
+				&receiver_len) <= 0)
 	{
 		fprintf(stderr, "Failed to receive packet\n");
 		return -1;
 	}
-	print_packet(icmp_packet, (struct sockaddr_in *)&receiver, g_data);
+
+	print_packet(full_packet, (struct sockaddr_in *)&receiver, g_data);
 	return 0;
 }
 
 void traceroute_loop(t_data *g_data)
 {
 
-	int ttl = 63; /* Set to 1 */
+	int ttl = 1; /* Set to 1 */
 
-	while (ttl < 64) {
+	printf("traceroute to %s (%s), %d hops max, %ld bytes packets\n",
+		g_data->address, g_data->ipv4, g_data->hops, sizeof(struct icmp_packet));
+
+	while (ttl < 60) {
 		monitor_packet(g_data, ttl);
-		ttl++;
+		ttl+=10;
 	}
 }

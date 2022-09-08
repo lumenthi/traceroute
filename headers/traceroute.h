@@ -6,7 +6,7 @@
 /*   By: lumenthi <lumenthi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/08/15 13:05:31 by lumenthi          #+#    #+#             */
-/*   Updated: 2022/09/08 17:13:10 by lumenthi         ###   ########.fr       */
+/*   Updated: 2022/09/08 18:11:17 by lumenthi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,6 +85,17 @@ struct iphdr
 };
 */
 
+/* udp */
+/*
+struct udphdr
+{
+	u_int16_t	source;
+	u_int16_t	dest;
+	u_int16_t	len;
+	u_int16_t	check;
+};
+*/
+
 /* icmp */
 /*
 struct icmphdr
@@ -115,7 +126,7 @@ typedef struct icmp_packet {
 }						t_icmp_packet;
 
 typedef struct	packet {
-	struct iphdr		hdr;
+	struct iphdr		ip_hdr;
 	struct icmp_packet	content;
 }						t_packet;
 
