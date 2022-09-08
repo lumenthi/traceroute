@@ -6,7 +6,7 @@
 /*   By: lumenthi <lumenthi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/08/20 11:05:20 by lumenthi          #+#    #+#             */
-/*   Updated: 2022/09/07 19:31:02 by lumenthi         ###   ########.fr       */
+/*   Updated: 2022/09/08 11:28:35 by lumenthi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,56 +39,64 @@ unsigned short checksum(void *b, int len)
 	return result;
 }
 
-static int monitor_packet(t_data g_data, int ttl)
+static void debug_packet()
 {
-	t_packet		packet;
-	int				packet_nbr;
-	struct sockaddr	receiver;
-	socklen_t		receiver_len;
+
+}
+
+static int monitor_packet(t_data *g_data, int ttl)
+{
+	struct icmp_packet		icmp_packet;
+	struct sockaddr			receiver;
+	socklen_t				receiver_len;
 
 	/* Setting TTL option */
-	if (setsockopt(g_data.sockfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl)) != 0) {
-		fprintf(stderr, "%s: %s: Failed to set TTL\n", g_data.path, g_data.address);
-		freeaddrinfo(g_data.host_info);
+	if (setsockopt(g_data->sockfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl)) != 0) {
+		fprintf(stderr, "%s: %s: Failed to set TTL\n", g_data->path, g_data->address);
+		freeaddrinfo(g_data->host_info);
 		return 1;
 	}
 
-	printf("PING %s (%s) 56(84) bytes of data.\n", g_data.address, g_data.ipv4);
+	printf("traceroute to %s (%s), %d hops max, %ld bytes packets\n",
+		g_data->address, g_data->ipv4, g_data->hops, sizeof(icmp_packet));
 
-	packet_nbr = 0;
 	/* Formatting packet header */
-	ft_memset(&packet, 0, sizeof(packet));
-	packet.hdr.type = ICMP_ECHO;
-	packet.hdr.un.echo.id = getpid();
-	packet.hdr.un.echo.sequence = packet_nbr++;
-	packet.hdr.checksum = checksum(&packet, sizeof(packet));
+	ft_memset(&icmp_packet, 0, sizeof(icmp_packet));
+	icmp_packet.hdr.type = ICMP_ECHO;
+	icmp_packet.hdr.un.echo.id = getpid();
+	icmp_packet.hdr.un.echo.sequence = g_data->sequence;
+	icmp_packet.hdr.checksum = checksum(&icmp_packet, sizeof(icmp_packet));
 
 	/* Preparing receiver */
 	receiver_len = sizeof(receiver);
 
 	/* debug_packet(packet); */
-	if (sendto(g_data.sockfd,
-				&packet,
-				sizeof(packet),
+	if (sendto(g_data->sockfd,
+				&icmp_packet,
+				sizeof(icmp_packet),
 				0,
-				g_data.host_addr,
-				sizeof(*(g_data.host_addr))) <= 0)
+				g_data->host_addr,
+				sizeof(*(g_data->host_addr))) <= 0)
 	{
 		fprintf(stderr, "Failed to send packet\n");
+		return -1;
 	}
-	if (recvfrom(g_data.sockfd,
-				&packet,
-				sizeof(packet),
+	g_data->sequence++;
+	if (recvfrom(g_data->sockfd,
+				&icmp_packet,
+				sizeof(icmp_packet),
 				0,
 				&receiver,
-				&receiver_len) <= 0 && packet_nbr > 0)
+				&receiver_len) <= 0 && g_data->sequence > 0)
 	{
 		fprintf(stderr, "Failed to receive packet\n");
+		return -1;
 	}
-	return 1;
+	debug_packet(icmp_packet);
+	return 0;
 }
 
-void traceroute_loop(t_data g_data)
+void traceroute_loop(t_data *g_data)
 {
 
 	int ttl = 64; /* Set to 1 */

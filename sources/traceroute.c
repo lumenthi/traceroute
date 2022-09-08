@@ -6,7 +6,7 @@
 /*   By: lumenthi <lumenthi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/07 16:02:47 by lumenthi          #+#    #+#             */
-/*   Updated: 2022/09/07 22:23:18 by lumenthi         ###   ########.fr       */
+/*   Updated: 2022/09/08 12:46:06 by lumenthi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,22 +28,22 @@ static struct addrinfo *resolve(char *host)
 	return res;
 }
 
-static int host_informations(t_data *g_data)
+static int host_bind(t_data *g_data)
 {
-	struct addrinfo *ret = g_data->host_info;
+	/* IPv4 */
+	g_data->servaddr.sin_family = AF_INET;
+	g_data->servaddr.sin_addr.s_addr = INADDR_ANY;
+	g_data->servaddr.sin_port = htons(g_data->port);
 
-	if (!(inet_ntop(AF_INET,
-					&((const struct sockaddr_in *)ret->ai_addr)->sin_addr,
-					g_data->ipv4,
-					sizeof(g_data->ipv4))))
+	g_data->host_addr = (struct sockaddr *)&g_data->servaddr;
+
+	/* Bind with the server addr */
+	if (!(bind(g_data->sockfd, g_data->host_addr,
+		sizeof(g_data->servaddr))))
 	{
-		return 1;
-	}
-	else {
-		g_data->host_addr = ret->ai_addr;
 		return 0;
 	}
-	return 0;
+	return 1;
 }
 
 int print_help()
@@ -60,16 +60,19 @@ int ft_traceroute(char *destination, uint8_t args, char *path)
 	if (!destination || ARGS_H)
 		return print_help();
 
+	g_data.port = 33434; /* Default traceroute port */
 	g_data.path = path;
 	g_data.args = args;
 	g_data.address = destination;
+	g_data.sequence = 0;
+	g_data.hops = 30;
 
 	/* default timeout (seconds) */
 	timeout.tv_sec = 1;
 	timeout.tv_usec = 0;
 
-	/* Socket creation RAW/DGRAM ? */
-	if ((g_data.sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0) {
+	/* UDP socket */
+	if ((g_data.sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
 		fprintf(stderr, "%s: %s: Failed to create socket\n", path, destination);
 		return 1;
 	}
@@ -80,8 +83,9 @@ int ft_traceroute(char *destination, uint8_t args, char *path)
 	}
 	/* g_data.host_info is allocated ! Must free it now */
 	/* Getting informations about host */
-	if (host_informations(&g_data)) {
-		fprintf(stderr, "%s: %s: Failed to get informations about the host\n", path, destination);
+	if (host_bind(&g_data)) {
+		fprintf(stderr, "%s: %s: Failed to bind port %d\n",
+			path, destination, g_data.port);
 		freeaddrinfo(g_data.host_info);
 		return 1;
 	}
@@ -93,7 +97,7 @@ int ft_traceroute(char *destination, uint8_t args, char *path)
 		return 1;
 	}
 
-	traceroute_loop(g_data);
+	traceroute_loop(&g_data);
 
 	return 0;
 }
