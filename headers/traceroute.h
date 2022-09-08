@@ -6,7 +6,7 @@
 /*   By: lumenthi <lumenthi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/08/15 13:05:31 by lumenthi          #+#    #+#             */
-/*   Updated: 2022/09/08 12:32:52 by lumenthi         ###   ########.fr       */
+/*   Updated: 2022/09/08 17:13:10 by lumenthi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,17 @@
 
 # define ARGS_H args & 0x01
 
+/* struct addrinfo {
+    int				ai_flags;
+    int				ai_family;
+    int				ai_socktype;
+    int				ai_protocol;
+    size_t			ai_addrlen;
+    struct sockaddr	*ai_addr;
+    char			*ai_canonname;
+    struct addrinfo	*ai_next;
+}; */
+
 typedef struct	s_data {
 	uint8_t				args;
 	char				*path;
@@ -39,7 +50,6 @@ typedef struct	s_data {
 
 	struct sockaddr		*host_addr;
 	struct sockaddr_in	servaddr;
-	struct sockaddr_in	cliaddr;
 
 	struct timeval		start_time;
 	struct timeval		end_time;
@@ -100,9 +110,14 @@ struct icmphdr
 */
 
 typedef struct icmp_packet {
-	struct icmphdr	hdr;
-	char			msg[60-sizeof(struct icmphdr)];
-}					icmp_packet;
+	struct icmphdr		hdr;
+	char				msg[60-sizeof(struct icmphdr)];
+}						t_icmp_packet;
+
+typedef struct	packet {
+	struct iphdr		hdr;
+	struct icmp_packet	content;
+}						t_packet;
 
 /* traceroute.c */
 int		ft_traceroute(char *destination, uint8_t args, char *path);
