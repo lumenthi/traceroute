@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   traceroute.h                                       :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: lumenthi <lumenthi@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2022/08/15 13:05:31 by lumenthi          #+#    #+#             */
-/*   Updated: 2022/09/08 18:11:17 by lumenthi         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #ifndef TRACEROUTE_H
 # define TRACEROUTE_H
 
@@ -27,26 +15,40 @@
 #include <netinet/in.h>
 #include <sys/time.h>
 #include <netinet/ip_icmp.h>
+#include <netinet/udp.h>
 
 # define ARGS_H args & 0x01
 
-/* struct addrinfo {
-    int				ai_flags;
-    int				ai_family;
-    int				ai_socktype;
-    int				ai_protocol;
-    size_t			ai_addrlen;
-    struct sockaddr	*ai_addr;
-    char			*ai_canonname;
-    struct addrinfo	*ai_next;
+/* struct sockaddr {
+	ushort	sa_family;
+	char	sa_data[14];
 }; */
+
+/* struct sockaddr_in {
+	short	sin_family;
+	u_short	sin_port;
+	struct	in_addr sin_addr;
+	char	sin_zero[8];
+}; */
+
+/* struct addrinfo {
+	int				ai_flags;
+	int				ai_family;
+	int				ai_socktype;
+	int				ai_protocol;
+	size_t			ai_addrlen;
+	struct sockaddr	*ai_addr;
+	char			*ai_canonname;
+	struct addrinfo	*ai_next;
+}; */
+
+# define CONTENT "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_"
 
 typedef struct	s_data {
 	uint8_t				args;
 	char				*path;
 	char				ipv4[INET_ADDRSTRLEN];
 	struct addrinfo		*host_info;
-	uint16_t			port;
 
 	struct sockaddr		*host_addr;
 	struct sockaddr_in	servaddr;
@@ -54,15 +56,13 @@ typedef struct	s_data {
 	struct timeval		start_time;
 	struct timeval		end_time;
 	char				*address;
-	int					sockfd;
+
 	int					interval;
 	unsigned int		sequence;
 	unsigned int		hops;
 }						t_data;
 
-/* ip */
-/*
-struct iphdr
+/* struct iphdr
 {
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 	unsigned int	ihl:4;
@@ -82,23 +82,17 @@ struct iphdr
 	u_int16_t	check;
 	u_int32_t	saddr;
 	u_int32_t	daddr;
-};
-*/
+}; */
 
-/* udp */
-/*
-struct udphdr
+/* struct udphdr
 {
 	u_int16_t	source;
 	u_int16_t	dest;
 	u_int16_t	len;
 	u_int16_t	check;
-};
-*/
+}; */
 
-/* icmp */
-/*
-struct icmphdr
+/* struct icmphdr
 {
 	u_int8_t	type;
 	u_int8_t	code;
@@ -117,13 +111,17 @@ struct icmphdr
 			u_int16_t	mtu;
 		}	frag;
 	}	un;
-};
-*/
+}; */
 
 typedef struct icmp_packet {
 	struct icmphdr		hdr;
 	char				msg[60-sizeof(struct icmphdr)];
 }						t_icmp_packet;
+
+typedef struct udp_packet {
+	struct udphdr		hdr;
+	char				msg[60-sizeof(struct udphdr)];
+}						t_udp_packet;
 
 typedef struct	packet {
 	struct iphdr		ip_hdr;
@@ -141,8 +139,11 @@ void	traceroute_loop(t_data *g_data);
 - Default packet size: 60 ?
 - www.baidu.com
 - Entering the traceroute host command without options sends three 40-byte ICMP datagrams with an initial TTL of 1, a maximum TTL of 30, a timeout period of 5 seconds, and a TOS specification of 0 to destination UDP port number 33434. For each host in the processed path, the initial TTL for each host and the destination UDP port number for each packet sent are incremented by one.
--TCP (SOCK_STREAM)
--UDP (SOCK_DGRAM)
+- 16 Packets simultaneously
+- Port incrementation
+- TCP (SOCK_STREAM)
+- UDP (SOCK_DGRAM)
+- sudo tcpdump udp -X
 */
 
 #endif
