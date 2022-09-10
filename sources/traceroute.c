@@ -40,7 +40,6 @@ int ft_traceroute(char *destination, uint8_t args, char *path)
 	g_data.path = path;
 	g_data.args = args;
 	g_data.address = destination;
-	g_data.sequence = 0;
 	g_data.size = 32;
 	g_data.hops = 30;
 

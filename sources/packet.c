@@ -1,16 +1,15 @@
 #include "traceroute.h"
 
-static void print_packet(struct packet full_packet, struct sockaddr_in *receiver, t_data *g_data)
+static void print_packet(struct packet full_packet, struct sockaddr_in *receiver,
+	unsigned int ttl)
 {
 	(void)full_packet;
 	// printf("ttl: %d\n", full_packet.ip_hdr.ttl);
 	// printf("type: %d\n", full_packet.content.hdr.type);
 	// printf("id: %d\n", full_packet.content.hdr.un.echo.id);
 
-	g_data->sequence++;
-
 	printf(" %d  %s (%s)\n",
-		g_data->sequence, inet_ntoa(receiver->sin_addr), inet_ntoa(receiver->sin_addr));
+		ttl, inet_ntoa(receiver->sin_addr), inet_ntoa(receiver->sin_addr));
 }
 
 static int send_packet(t_data *g_data, unsigned int ttl, unsigned int port)
@@ -114,7 +113,7 @@ static int monitor_packet(t_data *g_data, unsigned int ttl, unsigned int port)
 		return -1;
 	}
 
-	print_packet(rec_packet, (struct sockaddr_in *)&receiver, g_data);
+	print_packet(rec_packet, (struct sockaddr_in *)&receiver, ttl);
 	close(socket);
 	return 0;
 }

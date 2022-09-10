@@ -56,7 +56,6 @@ typedef struct	s_data {
 	char				*address;
 
 	int					interval;
-	unsigned int		sequence;
 	unsigned int		hops;
 	unsigned int		size;
 }						t_data;
