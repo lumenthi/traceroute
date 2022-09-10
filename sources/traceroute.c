@@ -52,6 +52,7 @@ int ft_traceroute(char *destination, uint8_t args, char *path)
 	/* g_data.host_info is allocated ! Must free it now */
 
 	traceroute_loop(&g_data);
+	freeaddrinfo(g_data.host_info);
 
 	return 0;
 }

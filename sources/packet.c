@@ -2,9 +2,12 @@
 
 static void print_packet(struct packet full_packet, struct sockaddr_in *receiver, t_data *g_data)
 {
-	printf("ttl: %d\n", full_packet.ip_hdr.ttl);
-	printf("type: %d\n", full_packet.content.hdr.type);
-	printf("id: %d\n", full_packet.content.hdr.un.echo.id);
+	(void)full_packet;
+	// printf("ttl: %d\n", full_packet.ip_hdr.ttl);
+	// printf("type: %d\n", full_packet.content.hdr.type);
+	// printf("id: %d\n", full_packet.content.hdr.un.echo.id);
+
+	g_data->sequence++;
 
 	printf(" %d  %s (%s)\n",
 		g_data->sequence, inet_ntoa(receiver->sin_addr), inet_ntoa(receiver->sin_addr));
@@ -29,17 +32,24 @@ static int send_packet(t_data *g_data, unsigned int ttl, unsigned int port)
 	g_data->servaddr.sin_port = htons(port);
 	g_data->host_addr = (struct sockaddr *)&g_data->servaddr;
 
-	/* TODO: ERROR CHECKING */
-	rsocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	bind(rsocket, g_data->host_addr, sizeof(g_data->servaddr));
+	if ((rsocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+		fprintf(stderr, "Failed to create sender's socket\n");
+		return -1;
+	}
 
 	/* Set packet's TTL */
-	setsockopt(rsocket, SOL_IP, IP_TTL, &ttl, sizeof(ttl));
+	if (setsockopt(rsocket, SOL_IP, IP_TTL, &ttl, sizeof(ttl)) != 0) {
+		fprintf(stderr, "Failed to set sender's TTL\n");
+		return -1;
+	}
 	/* Real traceroute sets no flags in header set IP_PMTUDISC_DONT to allow fragmentation */
-	setsockopt(rsocket, IPPROTO_IP, IP_MTU_DISCOVER, &frag, sizeof(frag));
+	if (setsockopt(rsocket, IPPROTO_IP, IP_MTU_DISCOVER, &frag, sizeof(frag)) != 0) {
+		fprintf(stderr, "Failed to set sender's fragmentation\n");
+		return -1;
+	}
 
 	if (sendto(rsocket, buf, sizeof(buf), 0,
-		(struct sockaddr *)&g_data->servaddr, sizeof(*(g_data->host_addr))) <= 0)
+		g_data->host_addr, sizeof(*(g_data->host_addr))) <= 0)
 	{
 		fprintf(stderr, "Failed to send packet\n");
 		close(rsocket);
@@ -63,8 +73,13 @@ static int receive_packet(struct packet *rec_packet, struct sockaddr *receiver)
 		fprintf(stderr, "Failed to create receiver's socket\n");
 		return -1;
 	}
-	setsockopt(rsocket, SOL_SOCKET, SO_RCVTIMEO,
-		(const char*)&timeout, sizeof(timeout));
+
+	/* Set receive timeout */
+	if (setsockopt(rsocket, SOL_SOCKET, SO_RCVTIMEO,
+		(const char*)&timeout, sizeof(timeout)) != 0) {
+		fprintf(stderr, "Failed to set receiver's timeout\n");
+		return -1;
+	}
 
 	/* Formatting receivers */
 	ft_memset(rec_packet, 0, sizeof(*rec_packet));
@@ -94,22 +109,6 @@ static int monitor_packet(t_data *g_data, unsigned int ttl, unsigned int port)
 	if ((socket = send_packet(g_data, ttl, port)) < 0)
 		return -1;
 
-	/* Manual (debug) */
-	/* ft_memset(&rec_packet, 0, sizeof(rec_packet));
-	receiver_len = sizeof(receiver);
-	ft_memset(&receiver, 0, receiver_len);
-	if (recvfrom(socket,
-				&rec_packet,
-				sizeof(rec_packet),
-				0,
-				&receiver,
-				&receiver_len) <= 0)
-	{
-		fprintf(stderr, "Failed to receive packet\n");
-		return -1;
-	} */
-
-	// (void)receive_packet;
 	if (receive_packet(&rec_packet, &receiver) < 0) {
 		close(socket);
 		return -1;

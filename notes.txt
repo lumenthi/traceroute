@@ -36,3 +36,14 @@ sendto(3, "\10\0;h\273\227\1\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0".
 = FT_TRACEROUTE =
 sendto(3, "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_", 32, 0,
 {sa_family=AF_INET, sin_port=htons(33434), sin_addr=inet_addr("0.0.0.0")}, 16)
+
+
+= MAN TRACEROUTE =
+
+The "unlikely" port of the first probe is 33434, then for each next probe it is incremented by one
+
+-w waittime
+Set the time (in seconds) to wait for a response to a probe (default 5.0 sec).
+
+-N squeries
+Specifies the number of probe packets sent out simultaneously. Sending several probes concurrently can speed up traceroute considerably. The default value is 16.
