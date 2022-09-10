@@ -37,19 +37,41 @@ sendto(3, "\10\0;h\273\227\1\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0".
 sendto(3, "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_", 32, 0,
 {sa_family=AF_INET, sin_port=htons(33434), sin_addr=inet_addr("0.0.0.0")}, 16)
 
-= MAN TRACEROUTE =
+== MAN TRACEROUTE ==
+
+= PORTS
 The "unlikely" port of the first probe is 33434, then for each next probe it is incremented by one
 
+= HOPS
+We start our probes with a ttl of one and increase by one until we get an  ICMP  "port  unreachable"  (or  TCP  reset), which means we got to the "host", or hit a max (which defaults to 30 hops)
+
+= PACKET SIZE
+ The  optional packet_len`gth  is  the  total size of the probing packet (default 60 bytes for IPv4 and 80 for IPv6).
+
+= TIMEOUT
 -w waittime
 Set the time (in seconds) to wait for a response to a probe (default 5.0 sec).
 
+= SQUERIES
 -N squeries
 Specifies the number of probe packets sent out simultaneously. Sending several probes concurrently can speed up traceroute considerably. The default value is 16.
 
-traceroute to www.google.com (216.58.213.68), 30 hops max, 60 byte packets
-
+=OUTPUT=
                                  PORTS
 TTL                       33434      33435    33436
  1  10.0.2.2 (10.0.2.2)  0.215 ms  0.174 ms  0.261 ms
 TTL                                 33437      33438    33439
  2  10.12.254.254 (10.12.254.254)  0.645 ms  0.718 ms  0.604 ms
+
+= SOCKET CREATION =
+Creates only necessary sockets (nb of probes * 3)
+
+$ sudo strace traceroute www.google.com -m 1 2>&1 | grep "IPPROTO_UDP" | wc -l
+3
+
+$ sudo strace traceroute www.google.com -m 2 2>&1 | grep "IPPROTO_UDP" | wc -l
+6
+
+= BONUSES =
+-f first_ttl, --first=first_ttl
+    Specifies with what TTL to start. Defaults to 1.

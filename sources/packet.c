@@ -99,41 +99,82 @@ static int receive_packet(struct packet *rec_packet, struct sockaddr *receiver)
 	return 0;
 }
 
-static int monitor_packet(t_data *g_data, unsigned int ttl, unsigned int port)
+static int	 create_sockets(t_data *g_data)
 {
-	int					socket;
-	struct packet		rec_packet;
-	struct sockaddr		receiver;
+	unsigned int i = 0;
 
-	if ((socket = send_packet(g_data, ttl, port)) < 0)
-		return -1;
+	while (i < g_data->squeries) {
+		/* UDP socket */
+		if ((g_data->udp_sockets[i] = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
+		{
+			fprintf(stderr, "Failed to create sender's socket\n");
+			return -1;
+		}
+		FD_SET(g_data->udp_sockets[i], &g_data->udpfds);
 
-	if (receive_packet(&rec_packet, &receiver) < 0) {
-		close(socket);
-		return -1;
+		/* ICMP socket */
+		if ((g_data->icmp_sockets[i] = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
+		{
+			fprintf(stderr, "Failed to create receiver's socket\n");
+			return -1;
+		}
+		FD_SET(g_data->icmp_sockets[i], &g_data->icmpfds);
+		i++;
 	}
+	return 0;
+}
 
-	print_packet(rec_packet, (struct sockaddr_in *)&receiver, ttl);
-	close(socket);
+static void	clear_sockets(t_data *g_data)
+{
+	unsigned int i = 0;
+
+	while (i < g_data->squeries) {
+		/* UDP socket */
+		FD_CLR(g_data->udp_sockets[i], &g_data->udpfds);
+		close(g_data->udp_sockets[i]);
+
+		/* ICMP socket */
+		FD_CLR(g_data->icmp_sockets[i], &g_data->icmpfds);
+		close(g_data->icmp_sockets[i]);
+		i++;
+	}
+}
+
+static int monitor_packet(t_data *g_data)
+{
+	printf("Select return: %d\n", select(g_data->squeries, &g_data->icmpfds,
+		&g_data->udpfds, NULL, NULL));
+
+	/* while (1) {
+		if (select(max_sockets, &icmpfds, &udpfds, NULL, NULL)) {
+		}
+		if (FD_ISSET)
+	} */
+
+	(void)send_packet;
+	(void)receive_packet;
+	(void)print_packet;
+	// print_packet(rec_packet, (struct sockaddr_in *)&receiver, ttl);
+
 	return 0;
 }
 
 void traceroute_loop(t_data *g_data)
 {
-	unsigned int ttl = 1; /* Set to 1 */
-	unsigned int lim = ttl+2;
-	unsigned int port = 33434; /* Default port */
 	int ret = 0;
+	unsigned int hop = 0;
 
 	printf("traceroute to %s (%s), %d hops max, %ld bytes packets\n",
 		g_data->address, g_data->ipv4, g_data->hops,
 		sizeof(struct iphdr)+sizeof(struct udphdr)+g_data->size);
 
-	while (ttl < lim) {
-		ret = monitor_packet(g_data, ttl, port);
+	create_sockets(g_data); /* TODO: Error check */
+
+	while (hop < g_data->hops) {
+		ret = monitor_packet(g_data);
 		if (ret < 0)
 			break;
-		ttl++;
-		port++;
+		hop++;
 	}
+	clear_sockets(g_data);
 }

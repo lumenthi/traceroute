@@ -56,8 +56,19 @@ typedef struct	s_data {
 	char				*address;
 
 	int					interval;
-	unsigned int		hops;
-	unsigned int		size;
+	unsigned int		hops; /* Max hops */
+	unsigned int		size; /* Packet size */
+	unsigned int		squeries; /* Simultaneous queries */
+	unsigned int		ttl;
+	unsigned int		port;
+
+	/* Select related */
+	/* Dynamically allocated */
+	int					*udp_sockets;
+	int					*icmp_sockets;
+	fd_set				udpfds;
+	fd_set				icmpfds;
+
 }						t_data;
 
 /* struct iphdr

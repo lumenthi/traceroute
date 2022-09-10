@@ -37,11 +37,29 @@ int ft_traceroute(char *destination, uint8_t args, char *path)
 	if (!destination || ARGS_H)
 		return print_help();
 
+	/* Options */
 	g_data.path = path;
 	g_data.args = args;
 	g_data.address = destination;
-	g_data.size = 32;
-	g_data.hops = 30;
+	g_data.size = 32; /* Packet's content size */
+	g_data.hops = 2;
+
+	/* Simultaneous queries calculation */
+	g_data.squeries = 16;
+	g_data.squeries = g_data.hops * 3 < g_data.squeries ?
+		g_data.hops * 3 : g_data.squeries;
+
+	g_data.port = 33434; /* Starting port */
+	g_data.ttl = 1; /* Starting ttl */
+
+	printf("Simultaneous queries: %d\n", g_data.squeries);
+
+	g_data.udp_sockets = (int *)malloc(sizeof(int) * g_data.squeries);
+	g_data.icmp_sockets = (int *)malloc(sizeof(int) * g_data.squeries);
+	if (!g_data.udp_sockets || !g_data.icmp_sockets) {
+		fprintf(stderr, "%s: %s: Malloc error\n", path, destination);
+		return 1;
+	}
 
 	/* Resolving host */
 	if (resolve(destination, &g_data)) {
@@ -51,6 +69,10 @@ int ft_traceroute(char *destination, uint8_t args, char *path)
 	/* g_data.host_info is allocated ! Must free it now */
 
 	traceroute_loop(&g_data);
+
+	/* Freeing stuff */
+	free(g_data.udp_sockets);
+	free(g_data.icmp_sockets);
 	freeaddrinfo(g_data.host_info);
 
 	return 0;
