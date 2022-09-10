@@ -12,7 +12,7 @@ static struct addrinfo *resolve(char *host, t_data *g_data)
 	hints.ai_protocol = IPPROTO_UDP;
 
 	/* subject to any restrictions imposed by hints */
-	if (getaddrinfo(host, NULL, &hints, &res) == -1)
+	if (getaddrinfo(host, NULL, &hints, &res) == -1 || res == NULL)
 		return NULL;
 
 	struct sockaddr_in *tmp = (struct sockaddr_in *)(res->ai_addr);
@@ -31,7 +31,6 @@ int ft_traceroute(char *destination, uint8_t args, char *path)
 {
 	t_data g_data = {0};
 
-
 	if (!destination || ARGS_H)
 		return print_help();
 
@@ -39,6 +38,7 @@ int ft_traceroute(char *destination, uint8_t args, char *path)
 	g_data.args = args;
 	g_data.address = destination;
 	g_data.sequence = 0;
+	g_data.size = 32;
 	g_data.hops = 30;
 
 	/* Resolving host */

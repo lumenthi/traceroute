@@ -42,8 +42,6 @@
 	struct addrinfo	*ai_next;
 }; */
 
-# define CONTENT "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_"
-
 typedef struct	s_data {
 	uint8_t				args;
 	char				*path;
@@ -60,6 +58,7 @@ typedef struct	s_data {
 	int					interval;
 	unsigned int		sequence;
 	unsigned int		hops;
+	unsigned int		size;
 }						t_data;
 
 /* struct iphdr
