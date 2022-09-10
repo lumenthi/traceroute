@@ -2,14 +2,6 @@
 
 static void print_packet(struct packet full_packet, struct sockaddr_in *receiver, t_data *g_data)
 {
-	unsigned int i = 0;
-	uint8_t *tmp = (uint8_t*)&full_packet;
-	while (i < sizeof(full_packet))
-	{
-		printf("%x ", tmp[i]);
-		i++;
-	}
-
 	printf("ttl: %d\n", full_packet.ip_hdr.ttl);
 	printf("type: %d\n", full_packet.content.hdr.type);
 	printf("id: %d\n", full_packet.content.hdr.un.echo.id);
@@ -20,9 +12,10 @@ static void print_packet(struct packet full_packet, struct sockaddr_in *receiver
 
 static int send_packet(t_data *g_data, unsigned int ttl, unsigned int port)
 {
-	int		rsocket;
-	char	buf[g_data->size];
-	unsigned int i = 0;
+	int				rsocket;
+	char			buf[g_data->size];
+	unsigned int	i = 0;
+	int				frag = IP_PMTUDISC_DONT;
 
 	/* Packet content */
 	while (i < g_data->size)
@@ -31,24 +24,25 @@ static int send_packet(t_data *g_data, unsigned int ttl, unsigned int port)
 		i++;
 	}
 
+	/* Package informations */
 	g_data->servaddr.sin_family = AF_INET;
-	g_data->servaddr.sin_addr.s_addr = INADDR_ANY;
 	g_data->servaddr.sin_port = htons(port);
-
 	g_data->host_addr = (struct sockaddr *)&g_data->servaddr;
 
 	/* TODO: ERROR CHECKING */
-
 	rsocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	bind(rsocket, g_data->host_addr, sizeof(g_data->servaddr));
-	// setsockopt(socket, SOL_IP, IP_MTU_DISCOVER, [0], 4) = 0
-	// setsockopt(socket, SOL_SOCKET, SO_TIMESTAMP, [1], 4) = 0
-	// setsockopt(3, SOL_IP, IP_RECVTTL, [1], 4) = 0
-	// setsockopt(rsocket, SOL_IP, IP_RECVERR, [1], 4) = 0
+
+	/* Set packet's TTL */
 	setsockopt(rsocket, SOL_IP, IP_TTL, &ttl, sizeof(ttl));
-	if (sendto(rsocket, buf, sizeof(buf), 0, g_data->host_addr, sizeof(*(g_data->host_addr))) <= 0)
+	/* Real traceroute sets no flags in header set IP_PMTUDISC_DONT to allow fragmentation */
+	setsockopt(rsocket, IPPROTO_IP, IP_MTU_DISCOVER, &frag, sizeof(frag));
+
+	if (sendto(rsocket, buf, sizeof(buf), 0,
+		(struct sockaddr *)&g_data->servaddr, sizeof(*(g_data->host_addr))) <= 0)
 	{
 		fprintf(stderr, "Failed to send packet\n");
+		close(rsocket);
 		return -1;
 	}
 
@@ -128,7 +122,7 @@ static int monitor_packet(t_data *g_data, unsigned int ttl, unsigned int port)
 
 void traceroute_loop(t_data *g_data)
 {
-	unsigned int ttl = 64; /* Set to 1 */
+	unsigned int ttl = 1; /* Set to 1 */
 	unsigned int lim = ttl+2;
 	unsigned int port = 33434; /* Default port */
 	int ret = 0;
