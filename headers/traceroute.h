@@ -47,6 +47,9 @@
 #define NOT_DISPLAYED 2
 #define DISPLAYED 3
 
+/* Index of the current querry */
+#define CURRENT_QUERY g_data->port-g_data->sport
+
 typedef struct			s_query {
 	char				ipv4[INET_ADDRSTRLEN];
 	unsigned int		port;

@@ -55,13 +55,13 @@ int ft_traceroute(char *destination, uint8_t args, char *path)
 	g_data.args = args;
 	g_data.address = destination;
 	g_data.size = 32; /* Packet's content size */
-	g_data.hops = 2; /* 30 */
+	g_data.hops = 3; /* 30 */
 
 	/* Total queries */
 	g_data.tqueries = g_data.hops * 3;
 
 	/* Simultaneous queries calculation */
-	g_data.squeries = 6; /* 16 */
+	g_data.squeries = 1; /* 16 */
 	g_data.squeries = g_data.tqueries < g_data.squeries ?
 		g_data.tqueries : g_data.squeries;
 

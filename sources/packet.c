@@ -49,8 +49,8 @@ static int send_packet(t_data *g_data, int rsocket)
 		return -1;
 	}
 
-	g_data->queries[g_data->port-g_data->sport].port = g_data->port;
-	g_data->queries[g_data->port-g_data->sport].status = SENT;
+	g_data->queries[CURRENT_QUERY].port = g_data->port;
+	g_data->queries[CURRENT_QUERY].status = SENT;
 
 	return rsocket;
 }
@@ -67,19 +67,19 @@ static int queries_informations(t_data *g_data, struct packet full_packet,
 
 	port = ntohs(udp_hdr->dest);
 
+	printf("Index: %d\n", CURRENT_QUERY);
 	printf("Port: %d\n", port);
+	printf("Time to live: %d\n", ip_hdr->ttl);
 	// printf("Total: %d\n", g_data->tqueries);
-	// printf("Index: %d\n", g_data->port-g_data->sport);
 	// printf("Adddr: %s\n", inet_ntoa(((struct sockaddr_in *)&receiver)->sin_addr));
 	// printf("Port: %d\n", ((struct sockaddr_in *)&receiver)->sin_port);
 
-	(void)port;
 	ft_strncpy(
-		g_data->queries[g_data->port-g_data->sport].ipv4,
+		g_data->queries[CURRENT_QUERY].ipv4,
 		inet_ntoa(((struct sockaddr_in *)&receiver)->sin_addr),
 		INET_ADDRSTRLEN
 	);
-	g_data->queries[g_data->port-g_data->sport].status = RECEIVED;
+	g_data->queries[CURRENT_QUERY].status = RECEIVED;
 	return 0;
 }
 
@@ -171,10 +171,13 @@ static int	udp_iterate(t_data *g_data)
 {
 	unsigned int i = 0;
 	while (i < g_data->squeries) {
+		/* Sent all packets */
+		if (g_data->port - g_data->sport >= g_data->tqueries)
+			return 1;
 		if (FD_ISSET(g_data->udp_sockets[i], &g_data->udpfds)) {
 			send_packet(g_data, g_data->udp_sockets[i]); /* TODO: Error check */
 			g_data->port++;
-			g_data->ttl = g_data->sttl + ((g_data->port - g_data->sport) / 3);
+			g_data->ttl = g_data->sttl+1 + ((g_data->port - g_data->sport) / 3);
 		}
 		i++;
 	}
@@ -194,24 +197,35 @@ static int	icmp_receive(t_data *g_data)
 	return 0;
 }
 
+static int print_everything(t_data *g_data)
+{
+	(void)g_data;
+	if (CURRENT_QUERY >= g_data->tqueries)
+		return 1; /* TODO: Remove, for debug until implemented */
+	return 0;
+}
+
 static int monitor_packet(t_data *g_data)
 {
 	printf("[*] Iteration\n");
+
+	/* TODO: Potential infinite selects, set timeout */
 	if (select(g_data->maxfd+1, NULL,
 		&g_data->udpfds, NULL, NULL)) {
 		udp_iterate(g_data); /* TODO: Error check */
 	}
+
 	if (select(g_data->maxfd+1, &g_data->icmpfd,
 		NULL, NULL, NULL)) {
 		icmp_receive(g_data); /* TODO: Error check */
 	}
-	return 0;
+	/* TODO: Print stop condition */
+	return print_everything(g_data);
 }
 
 void traceroute_loop(t_data *g_data)
 {
 	int ret = 0;
-	unsigned int hop = 0;
 
 	printf("traceroute to %s (%s), %d hops max, %ld bytes packets\n",
 		g_data->address, g_data->ipv4, g_data->hops,
@@ -219,11 +233,7 @@ void traceroute_loop(t_data *g_data)
 
 	create_sockets(g_data); /* TODO: Error check */
 
-	while (hop < g_data->hops) {
-		ret = monitor_packet(g_data);
-		if (ret < 0)
-			break;
-		hop++;
+	while (!(ret = monitor_packet(g_data))) {
 	}
 
 	clear_sockets(g_data);
