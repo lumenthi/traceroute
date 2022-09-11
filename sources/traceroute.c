@@ -35,8 +35,8 @@ int	end(t_data *g_data, int code)
 	/* Freeing stuff */
 	if (g_data->udp_sockets)
 		free(g_data->udp_sockets);
-	// if (g_data->queries)
-	//	free(g_data->queries);
+	if (g_data->queries)
+		free(g_data->queries);
 	if (g_data->host_info)
 		freeaddrinfo(g_data->host_info);
 
@@ -77,7 +77,8 @@ int ft_traceroute(char *destination, uint8_t args, char *path)
 	/* printf("Simultaneous queries: %d\n", g_data.squeries); */
 
 	g_data.udp_sockets = (int *)malloc(sizeof(int) * g_data.squeries);
-	g_data.queries = (t_query *)malloc(sizeof(t_query) * g_data.tqueries);
+	/* Starting at index 1 TODO: Remove + 1 to malloc ? */
+	g_data.queries = (t_query *)malloc(sizeof(t_query) * (g_data.tqueries + 1));
 	if (!g_data.udp_sockets || !g_data.queries) {
 		fprintf(stderr, "%s: %s: Malloc error\n", path, destination);
 		return end(&g_data, 1);

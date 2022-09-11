@@ -74,6 +74,8 @@ static int queries_informations(t_data *g_data, struct packet full_packet,
 	// printf("Adddr: %s\n", inet_ntoa(((struct sockaddr_in *)&receiver)->sin_addr));
 	// printf("Port: %d\n", ((struct sockaddr_in *)&receiver)->sin_port);
 
+	/* TODO: Must find the right index by looking for port */
+
 	ft_strncpy(
 		g_data->queries[CURRENT_QUERY].ipv4,
 		inet_ntoa(((struct sockaddr_in *)&receiver)->sin_addr),

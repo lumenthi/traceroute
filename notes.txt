@@ -72,6 +72,9 @@ $ sudo strace traceroute www.google.com -m 1 2>&1 | grep "IPPROTO_UDP" | wc -l
 $ sudo strace traceroute www.google.com -m 2 2>&1 | grep "IPPROTO_UDP" | wc -l
 6
 
+= ICMP ERROR
+When an error occurs (ex: TTL expired) the icmp protocol sends back an icmp packet with the packet that failed in its content.
+
 = BONUSES =
 -f first_ttl, --first=first_ttl
     Specifies with what TTL to start. Defaults to 1.
