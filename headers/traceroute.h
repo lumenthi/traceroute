@@ -42,11 +42,13 @@
 	struct addrinfo	*ai_next;
 }; */
 
-#define NOT_DISPLAYED 0
-#define DISPLAYED 1
+#define SENT 0
+#define RECEIVED 1
+#define NOT_DISPLAYED 2
+#define DISPLAYED 3
 
 typedef struct			s_query {
-	struct sockaddr_in	sin_addr;
+	char				ipv4[INET_ADDRSTRLEN];
 	unsigned int		port;
 	uint8_t				status;
 }						t_query;
@@ -75,11 +77,11 @@ typedef struct	s_data {
 
 	/* Select related */
 	fd_set				udpfds;
-	fd_set				icmpfds;
+	fd_set				icmpfd;
 	int					maxfd;
 	/* Dynamically allocated */
 	int					*udp_sockets;
-	int					*icmp_sockets;
+	int					icmp_socket;
 
 	/* Display related */
 	/* Dynamically allocated */
@@ -149,7 +151,7 @@ typedef struct udp_packet {
 	char				msg[60-sizeof(struct udphdr)];
 }						t_udp_packet;
 
-typedef struct	packet {
+typedef struct packet {
 	struct iphdr		ip_hdr;
 	struct icmp_packet	content;
 }						t_packet;

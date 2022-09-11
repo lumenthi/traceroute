@@ -49,19 +49,47 @@ static int send_packet(t_data *g_data, int rsocket)
 		return -1;
 	}
 
+	g_data->queries[g_data->port-g_data->sport].port = g_data->port;
+	g_data->queries[g_data->port-g_data->sport].status = SENT;
+
 	return rsocket;
+}
+
+static int queries_informations(t_data *g_data, struct packet full_packet,
+	struct sockaddr_in *receiver)
+{
+	unsigned int port;
+	struct iphdr *ip_hdr;
+	struct udphdr *udp_hdr;
+
+	ip_hdr = (struct iphdr *)(&full_packet.content.msg);
+	udp_hdr = (struct udphdr *)((void *)ip_hdr+sizeof(struct iphdr));
+
+	port = ntohs(udp_hdr->dest);
+
+	printf("Port: %d\n", port);
+	// printf("Total: %d\n", g_data->tqueries);
+	// printf("Index: %d\n", g_data->port-g_data->sport);
+	// printf("Adddr: %s\n", inet_ntoa(((struct sockaddr_in *)&receiver)->sin_addr));
+	// printf("Port: %d\n", ((struct sockaddr_in *)&receiver)->sin_port);
+
+	(void)port;
+	ft_strncpy(
+		g_data->queries[g_data->port-g_data->sport].ipv4,
+		inet_ntoa(((struct sockaddr_in *)&receiver)->sin_addr),
+		INET_ADDRSTRLEN
+	);
+	g_data->queries[g_data->port-g_data->sport].status = RECEIVED;
+	return 0;
 }
 
 static int receive_packet(t_data *g_data, int rsocket)
 {
-	struct timeval	timeout;
 	struct packet	rec_packet;
 	struct sockaddr receiver;
 	socklen_t		receiver_len;
-
 	/* default timeout (seconds) */
-	timeout.tv_sec = 5;
-	timeout.tv_usec = 0;
+	struct timeval timeout = {5, 0};
 
 	/* Set receive timeout */
 	if (setsockopt(rsocket, SOL_SOCKET, SO_RCVTIMEO,
@@ -86,7 +114,10 @@ static int receive_packet(t_data *g_data, int rsocket)
 		return -1;
 	}
 
-	print_packet(g_data, rec_packet, (struct sockaddr_in *)&receiver);
+	queries_informations(g_data, rec_packet, (struct sockaddr_in *)&receiver);
+
+	(void)print_packet;
+	// print_packet(g_data, rec_packet, (struct sockaddr_in *)&receiver);
 
 	return 0;
 }
@@ -95,7 +126,7 @@ static int	 create_sockets(t_data *g_data)
 {
 	unsigned int i = 0;
 	FD_ZERO(&g_data->udpfds);
-	FD_ZERO(&g_data->icmpfds);
+	FD_ZERO(&g_data->icmpfd);
 
 	while (i < g_data->squeries) {
 		/* UDP socket */
@@ -107,18 +138,17 @@ static int	 create_sockets(t_data *g_data)
 		FD_SET(g_data->udp_sockets[i], &g_data->udpfds);
 		g_data->maxfd = g_data->udp_sockets[i] > g_data->maxfd ?
 			g_data->udp_sockets[i] : g_data->maxfd;
-
-		/* ICMP socket */
-		if ((g_data->icmp_sockets[i] = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
-		{
-			fprintf(stderr, "Failed to create receiver's socket\n");
-			return -1;
-		}
-		FD_SET(g_data->icmp_sockets[i], &g_data->icmpfds);
-		g_data->maxfd = g_data->icmp_sockets[i] > g_data->maxfd ?
-			g_data->icmp_sockets[i] : g_data->maxfd;
 		i++;
 	}
+	/* ICMP socket */
+	if ((g_data->icmp_socket = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
+	{
+		fprintf(stderr, "Failed to create receiver's socket\n");
+		return -1;
+	}
+	FD_SET(g_data->icmp_socket, &g_data->icmpfd);
+	g_data->maxfd = g_data->icmp_socket > g_data->maxfd ?
+		g_data->icmp_socket : g_data->maxfd;
 	return 0;
 }
 
@@ -130,12 +160,11 @@ static void	clear_sockets(t_data *g_data)
 		/* UDP socket */
 		FD_CLR(g_data->udp_sockets[i], &g_data->udpfds);
 		close(g_data->udp_sockets[i]);
-
-		/* ICMP socket */
-		FD_CLR(g_data->icmp_sockets[i], &g_data->icmpfds);
-		close(g_data->icmp_sockets[i]);
 		i++;
 	}
+	/* ICMP socket */
+	FD_CLR(g_data->icmp_socket, &g_data->icmpfd);
+	close(g_data->icmp_socket);
 }
 
 static int	udp_iterate(t_data *g_data)
@@ -152,34 +181,30 @@ static int	udp_iterate(t_data *g_data)
 	return 0;
 }
 
-static int	icmp_iterate(t_data *g_data)
+static int	icmp_receive(t_data *g_data)
 {
 	unsigned int i = 0;
-	while (i < g_data->squeries) {
-		if (FD_ISSET(g_data->icmp_sockets[i], &g_data->icmpfds)) {
-			receive_packet(g_data, g_data->icmp_sockets[i]); /* TODO: Error check */
+
+	if (FD_ISSET(g_data->icmp_socket, &g_data->icmpfd)) {
+		while (i < g_data->squeries) {
+			receive_packet(g_data, g_data->icmp_socket); /* TODO: Error check */
+			i++;
 		}
-		i++;
 	}
 	return 0;
 }
 
 static int monitor_packet(t_data *g_data)
 {
-	int i = 2; /* Debug */
-	while (i) {
-		printf("[*] Iteration\n");
-		if (select(g_data->maxfd+1, NULL,
-			&g_data->udpfds, NULL, NULL)) {
-			udp_iterate(g_data); /* TODO: Error check */
-		}
-		if (select(g_data->maxfd+1, &g_data->icmpfds,
-			NULL, NULL, NULL)) {
-			icmp_iterate(g_data); /* TODO: Error check */
-		}
-		i--;
+	printf("[*] Iteration\n");
+	if (select(g_data->maxfd+1, NULL,
+		&g_data->udpfds, NULL, NULL)) {
+		udp_iterate(g_data); /* TODO: Error check */
 	}
-
+	if (select(g_data->maxfd+1, &g_data->icmpfd,
+		NULL, NULL, NULL)) {
+		icmp_receive(g_data); /* TODO: Error check */
+	}
 	return 0;
 }
 
