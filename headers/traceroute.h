@@ -60,7 +60,9 @@ typedef struct	s_data {
 	unsigned int		size; /* Packet size */
 	unsigned int		squeries; /* Simultaneous queries */
 	unsigned int		ttl;
+	unsigned int		sttl;
 	unsigned int		port;
+	unsigned int		sport;
 
 	/* Select related */
 	/* Dynamically allocated */
@@ -68,6 +70,7 @@ typedef struct	s_data {
 	int					*icmp_sockets;
 	fd_set				udpfds;
 	fd_set				icmpfds;
+	int					maxfd;
 
 }						t_data;
 

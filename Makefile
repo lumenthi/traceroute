@@ -6,7 +6,7 @@
 #    By: lumenthi <lumenthi@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2017/12/22 14:06:43 by lumenthi          #+#    #+#              #
-#    Updated: 2022/09/07 19:29:32 by lumenthi         ###   ########.fr        #
+#    Updated: 2022/09/11 11:14:30 by lumenthi         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -22,6 +22,7 @@ RED = '\033[4;31m'
 BLANK = '\033[0m'
 YELLOW = '\033[4;33m'
 CYAN = '\033[4;38;5;51m'
+WARNING = '\033[1;33m'
 
 TICK = '\033[1;32m~\033[0m'
 CROSS = '\033[1;31mx\033[0m'
@@ -72,6 +73,9 @@ $(NAME):  $(OBJS) ${HEADERS}
 	@ make -sC $(LIBDIR)
 	$(CC) $(OBJS) -o $(NAME) $(LIBFT)
 	@ printf " %b | Compiled %b%b%b\n" $(TICK) $(GREEN) $(NAME) $(BLANK)
+	@ printf "%b" $(WARNING)
+	@ grep -nr "TODO" $(SRCDIR) $(HEADDIR) || true
+	@ printf "%b" $(BLANK)
 
 ###############################
 
