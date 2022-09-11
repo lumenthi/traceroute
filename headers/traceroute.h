@@ -42,6 +42,15 @@
 	struct addrinfo	*ai_next;
 }; */
 
+#define NOT_DISPLAYED 0
+#define DISPLAYED 1
+
+typedef struct			s_query {
+	struct sockaddr_in	sin_addr;
+	unsigned int		port;
+	uint8_t				status;
+}						t_query;
+
 typedef struct	s_data {
 	uint8_t				args;
 	char				*path;
@@ -65,14 +74,19 @@ typedef struct	s_data {
 	unsigned int		sport;
 
 	/* Select related */
-	/* Dynamically allocated */
-	int					*udp_sockets;
-	int					*icmp_sockets;
 	fd_set				udpfds;
 	fd_set				icmpfds;
 	int					maxfd;
+	/* Dynamically allocated */
+	int					*udp_sockets;
+	int					*icmp_sockets;
 
+	/* Display related */
+	/* Dynamically allocated */
+	unsigned int		tqueries;
+	t_query				*queries;
 }						t_data;
+
 
 /* struct iphdr
 {

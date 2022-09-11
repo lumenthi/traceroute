@@ -30,6 +30,21 @@ int print_help()
 	return 1;
 }
 
+int	end(t_data *g_data, int code)
+{
+	/* Freeing stuff */
+	if (g_data->udp_sockets)
+		free(g_data->udp_sockets);
+	if (g_data->icmp_sockets)
+		free(g_data->icmp_sockets);
+	if (g_data->queries)
+		free(g_data->queries);
+	if (g_data->host_info)
+		freeaddrinfo(g_data->host_info);
+
+	return code;
+}
+
 int ft_traceroute(char *destination, uint8_t args, char *path)
 {
 	t_data g_data = {0};
@@ -44,10 +59,13 @@ int ft_traceroute(char *destination, uint8_t args, char *path)
 	g_data.size = 32; /* Packet's content size */
 	g_data.hops = 2; /* 30 */
 
+	/* Total queries */
+	g_data.tqueries = g_data.hops * 3;
+
 	/* Simultaneous queries calculation */
-	g_data.squeries = 2; /* 16 */
-	g_data.squeries = g_data.hops * 3 < g_data.squeries ?
-		g_data.hops * 3 : g_data.squeries;
+	g_data.squeries = 16; /* 16 */
+	g_data.squeries = g_data.tqueries < g_data.squeries ?
+		g_data.tqueries : g_data.squeries;
 
 	g_data.sport = 33434; /* Starting port */
 	g_data.port = g_data.sport; /* Port we will increment */
@@ -56,29 +74,25 @@ int ft_traceroute(char *destination, uint8_t args, char *path)
 	g_data.ttl = g_data.sttl; /* TTL we will increment */
 
 	g_data.maxfd = 0;
+	g_data.host_info = NULL;
 
-	printf("Simultaneous queries: %d\n", g_data.squeries);
+	/* printf("Simultaneous queries: %d\n", g_data.squeries); */
 
 	g_data.udp_sockets = (int *)malloc(sizeof(int) * g_data.squeries);
 	g_data.icmp_sockets = (int *)malloc(sizeof(int) * g_data.squeries);
-	if (!g_data.udp_sockets || !g_data.icmp_sockets) {
+	g_data.queries = (t_query *)malloc(sizeof(t_query) * g_data.tqueries);
+	if (!g_data.udp_sockets || !g_data.icmp_sockets || !g_data.queries) {
 		fprintf(stderr, "%s: %s: Malloc error\n", path, destination);
-		return 1;
+		return end(&g_data, 1);
 	}
 
 	/* Resolving host */
 	if (resolve(destination, &g_data)) {
 		fprintf(stderr, "%s: %s: Name or service not known\n", path, destination);
-		return 1;
-	}
-	/* g_data.host_info is allocated ! Must free it now */
+		return end(&g_data, 1);
+	} /* g_data.host_info is allocated ! Must free it now */
 
 	traceroute_loop(&g_data);
 
-	/* Freeing stuff */
-	free(g_data.udp_sockets);
-	free(g_data.icmp_sockets);
-	freeaddrinfo(g_data.host_info);
-
-	return 0;
+	return end(&g_data, 0);
 }

@@ -168,6 +168,7 @@ static int monitor_packet(t_data *g_data)
 {
 	int i = 2; /* Debug */
 	while (i) {
+		printf("[*] Iteration\n");
 		if (select(g_data->maxfd+1, NULL,
 			&g_data->udpfds, NULL, NULL)) {
 			udp_iterate(g_data); /* TODO: Error check */
@@ -199,5 +200,6 @@ void traceroute_loop(t_data *g_data)
 			break;
 		hop++;
 	}
+
 	clear_sockets(g_data);
 }
