@@ -232,18 +232,6 @@ static int	icmp_receive(t_data *g_data)
 	return 0;
 }
 
-static void print_packet(t_data *g_data, struct packet full_packet,
-	struct sockaddr_in *receiver)
-{
-	(void)full_packet;
-	// printf("ttl: %d\n", full_packet.ip_hdr.ttl);
-	// printf("type: %d\n", full_packet.content.hdr.type);
-	// printf("id: %d\n", full_packet.content.hdr.un.echo.id);
-
-	printf(" %d  %s (%s)\n",
-		g_data->ttl, inet_ntoa(receiver->sin_addr), inet_ntoa(receiver->sin_addr));
-}
-
 static void sort_queries(t_data *g_data)
 {
 	t_query *queries = g_data->queries;
@@ -271,12 +259,16 @@ static int print_everything(t_data *g_data)
 	t_query *queries = g_data->queries;
 	unsigned int i = 0;
 
-	sort_queries(g_data);
-	// debug_queries(g_data->queries, g_data->tqueries);
+	(void)sort_queries;
+	(void)debug_queries;
+	//sort_queries(g_data);
+	//debug_queries(g_data->queries, g_data->tqueries);
 
 	while (i < g_data->tqueries) {
 		if (queries[i].status != DISPLAYED && queries[i].status != NOT_USED) {
 			if (ft_strcmp(g_data->aprobe, (char*)&queries[i].ipv4)) {
+				if (g_data->cprobe != 0)
+					printf("\n");
 				g_data->aprobe = (char *)&queries[i].ipv4;
 				g_data->cprobe++;
 				g_data->caddress = 0;
@@ -285,8 +277,6 @@ static int print_everything(t_data *g_data)
 			}
 			if (g_data->caddress < 3) {
 				printf("0.00 ms ");
-				if (g_data->nprobe == 1)
-					printf("\n");
 				queries[i].status = DISPLAYED;
 				g_data->caddress++;
 			}
@@ -298,11 +288,6 @@ static int print_everything(t_data *g_data)
 	}
 
 	/* TODO: Remove void casts */
-	(void)print_packet;
-	(void)sort_queries;
-	(void)debug_queries;
-	// sort_queries(g_data);
-	// debug_queries(g_data->queries, g_data->tqueries);
 	if (CURRENT_QUERY >= g_data->tqueries || g_data->reached)
 		return 1; /* TODO: Remove, for debug until implemented */
 	return 0;
@@ -315,10 +300,11 @@ static int monitor_packet(t_data *g_data)
 	if (CURRENT_QUERY < g_data->tqueries && !g_data->reached &&
 		select(g_data->maxfd+1, NULL, &g_data->udpfds, NULL, NULL))
 	{
-		printf("[*] UDP iteration\n");
+		/* TODO: REMOVE UNWANTED COMMENTS */
+		// printf("[*] UDP iteration\n");
 		udp_iterate(g_data); /* TODO: Error check */
 	}
-	printf("[*] ICMP iteration\n");
+	// printf("[*] ICMP iteration\n");
 	icmp_receive(g_data); /* TODO: Error check */
 
 	/* TODO: Print stop condition */
@@ -337,6 +323,8 @@ void traceroute_loop(t_data *g_data)
 		return;
 
 	while (!(ret = monitor_packet(g_data)));
+
+	printf("\n");
 
 	clear_sockets(g_data);
 }
