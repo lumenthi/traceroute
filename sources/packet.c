@@ -1,17 +1,5 @@
 #include "traceroute.h"
 
-static void print_packet(t_data *g_data, struct packet full_packet,
-	struct sockaddr_in *receiver)
-{
-	(void)full_packet;
-	// printf("ttl: %d\n", full_packet.ip_hdr.ttl);
-	// printf("type: %d\n", full_packet.content.hdr.type);
-	// printf("id: %d\n", full_packet.content.hdr.un.echo.id);
-
-	printf(" %d  %s (%s)\n",
-		g_data->ttl, inet_ntoa(receiver->sin_addr), inet_ntoa(receiver->sin_addr));
-}
-
 static int send_packet(t_data *g_data, int rsocket)
 {
 	char			buf[g_data->size];
@@ -71,7 +59,8 @@ static unsigned int get_packet_index(t_query *queries, unsigned int port,
 static void debug_queries(t_query *queries, unsigned int limit)
 {
 	unsigned int i = 0;
-	char *status[] = {"SENT", "RECEIVED", "TIMEOUT", "NOT_DISPLAYED", "DISPLAYED"};
+	char *status[] = {"NOT_USED", "SENT", "RECEIVED", "RECEIVED_END",
+		"TIMEOUT", "NOT_DISPLAYED", "DISPLAYED"};
 
 	while (i < limit) {
 		printf("+----------------\n");
@@ -88,33 +77,44 @@ static int queries_informations(t_data *g_data, struct packet full_packet,
 	struct sockaddr_in *receiver)
 {
 	unsigned int port;
+	uint8_t type;
 	struct iphdr *ip_hdr;
 	struct udphdr *udp_hdr;
+	struct icmphdr *icmp_hdr;
 	unsigned int index;
 
+	icmp_hdr = (struct icmphdr *)(&full_packet.content.hdr);
 	ip_hdr = (struct iphdr *)(&full_packet.content.msg);
 	udp_hdr = (struct udphdr *)((void *)ip_hdr+sizeof(struct iphdr));
 
 	port = ntohs(udp_hdr->dest);
+	type = icmp_hdr->type;
 
-	/* TODO: Must find the right index by looking for port */
+	/* TODO: Error check */
 	index = get_packet_index(g_data->queries, port, g_data->tqueries);
 
-	/* Gathered data */
+	/* Debug gathered data */
 	// printf("Index: %d\n", index);
 	// printf("Port: %d\n", port);
 	// printf("Time to live: %d\n", ip_hdr->ttl);
 	// printf("Total: %d\n", g_data->tqueries);
 	// printf("Adddr: %s\n", inet_ntoa(((struct sockaddr_in *)&receiver)->sin_addr));
 	// printf("Port: %d\n", ((struct sockaddr_in *)&receiver)->sin_port);
+	// printf("Status: %d\n", icmp_hdr->type);
 
 	ft_strncpy(
 		g_data->queries[index].ipv4,
 		inet_ntoa(receiver->sin_addr),
 		INET_ADDRSTRLEN
 	);
-	/* TODO: Set TIMEOUT status if timedout */
-	g_data->queries[index].status = RECEIVED;
+
+	if (type == ICMP_TIME_EXCEEDED)
+		g_data->queries[index].status = RECEIVED;
+	else if (type == ICMP_DEST_UNREACH) {
+		g_data->queries[index].status = RECEIVED_END;
+		g_data->reached = 1;
+	}
+
 	return 0;
 }
 
@@ -123,8 +123,9 @@ static int receive_packet(t_data *g_data, int rsocket)
 	struct packet	rec_packet;
 	struct sockaddr receiver;
 	socklen_t		receiver_len;
-	/* default timeout (seconds) */
-	struct timeval timeout = {5, 0};
+	/* Default timeout (seconds) */
+	struct timeval	timeout = {5, 0};
+	int				flags = g_data->drop ? MSG_DONTWAIT : 0;
 
 	/* Set receive timeout */
 	if (setsockopt(rsocket, SOL_SOCKET, SO_RCVTIMEO,
@@ -141,18 +142,17 @@ static int receive_packet(t_data *g_data, int rsocket)
 	if (recvfrom(rsocket,
 				&rec_packet,
 				sizeof(rec_packet),
-				0,
+				flags,
 				&receiver,
 				&receiver_len) <= 0)
 	{
+		/* TODO: Timedout ? */
 		fprintf(stderr, "Failed to receive packet\n");
+		g_data->drop = 1;
 		return -1;
 	}
 
 	queries_informations(g_data, rec_packet, (struct sockaddr_in *)&receiver);
-
-	(void)print_packet;
-	// print_packet(g_data, rec_packet, (struct sockaddr_in *)&receiver);
 
 	return 0;
 }
@@ -207,8 +207,6 @@ static int	udp_iterate(t_data *g_data)
 	unsigned int i = 0;
 	while (i < g_data->squeries) {
 		/* Sent all packets */
-		if (g_data->port - g_data->sport >= g_data->tqueries)
-			return 1;
 		if (FD_ISSET(g_data->udp_sockets[i], &g_data->udpfds)) {
 			send_packet(g_data, g_data->udp_sockets[i]); /* TODO: Error check */
 			g_data->port++;
@@ -232,28 +230,82 @@ static int	icmp_receive(t_data *g_data)
 	return 0;
 }
 
+static void print_packet(t_data *g_data, struct packet full_packet,
+	struct sockaddr_in *receiver)
+{
+	(void)full_packet;
+	// printf("ttl: %d\n", full_packet.ip_hdr.ttl);
+	// printf("type: %d\n", full_packet.content.hdr.type);
+	// printf("id: %d\n", full_packet.content.hdr.un.echo.id);
+
+	printf(" %d  %s (%s)\n",
+		g_data->ttl, inet_ntoa(receiver->sin_addr), inet_ntoa(receiver->sin_addr));
+}
+
+static void sort_queries(t_data *g_data)
+{
+	t_query *queries = g_data->queries;
+	t_query tmp;
+	unsigned int i = 0;
+	unsigned int j = 0;
+
+	while(i < g_data->tqueries) {
+		j = 0;
+		while (j < g_data->tqueries) {
+			/* SWAP */
+			if (queries[i].port < queries[j].port) {
+				printf("[*] SWAP\n");
+				tmp = queries[i];
+				queries[i] = queries[j];
+				queries[j] = tmp;
+			}
+			j++;
+		}
+		i++;
+	}
+}
+
 static int print_everything(t_data *g_data)
 {
-	(void)g_data;
-	if (CURRENT_QUERY >= g_data->tqueries)
+	//t_query *queries = g_data->queries;
+	unsigned int i = 0;
+	//unsigned char *probe_address = NULL;
+	//unsigned int probe_sport;
+
+	(void)print_packet;
+	sort_queries(g_data);
+	debug_queries(g_data->queries, g_data->tqueries);
+
+	while (i < g_data->tqueries) {
+		//if (probe
+		//if (probe_address
+		//printf();
+		i++;
+	}
+
+	if (CURRENT_QUERY >= g_data->tqueries || g_data->reached)
 		return 1; /* TODO: Remove, for debug until implemented */
 	return 0;
 }
 
 static int monitor_packet(t_data *g_data)
 {
-	printf("[*] Iteration\n");
-
+	g_data->drop = 0;
 	/* TODO: Potential infinite selects, set timeout */
-	if (select(g_data->maxfd+1, NULL,
-		&g_data->udpfds, NULL, NULL)) {
+	if (g_data->port - g_data->sport < g_data->tqueries && !g_data->reached &&
+		select(g_data->maxfd+1, NULL, &g_data->udpfds, NULL, NULL))
+	{
+		printf("[*] UDP iteration\n");
 		udp_iterate(g_data); /* TODO: Error check */
 	}
 
-	if (select(g_data->maxfd+1, &g_data->icmpfd,
-		NULL, NULL, NULL)) {
+	if (g_data->port - g_data->sport < g_data->tqueries && !g_data->reached &&
+		select(g_data->maxfd+1, &g_data->icmpfd, NULL, NULL, NULL))
+	{
+		printf("[*] ICMP iteration\n");
 		icmp_receive(g_data); /* TODO: Error check */
 	}
+
 	/* TODO: Print stop condition */
 	return print_everything(g_data);
 }
@@ -266,11 +318,10 @@ void traceroute_loop(t_data *g_data)
 		g_data->address, g_data->ipv4, g_data->hops,
 		sizeof(struct iphdr)+sizeof(struct udphdr)+g_data->size);
 
-	create_sockets(g_data); /* TODO: Error check */
+	if ((create_sockets(g_data)) == -1) /* TODO: Error check */
+		return;
 
 	while (!(ret = monitor_packet(g_data)));
-
-	debug_queries(g_data->queries, g_data->tqueries);
 
 	clear_sockets(g_data);
 }

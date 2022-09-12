@@ -55,7 +55,7 @@ int ft_traceroute(char *destination, uint8_t args, char *path)
 	g_data.args = args;
 	g_data.address = destination;
 	g_data.size = 32; /* Packet's content size */
-	g_data.hops = 3; /* 30 */
+	g_data.hops = 16; /* 30 */
 
 	/* Total queries */
 	g_data.tqueries = g_data.hops * 3;
@@ -74,11 +74,14 @@ int ft_traceroute(char *destination, uint8_t args, char *path)
 	g_data.maxfd = 0;
 	g_data.host_info = NULL;
 
+	g_data.reached = 0; /* Set to 1 when the server is reached */
+
 	/* printf("Simultaneous queries: %d\n", g_data.squeries); */
 
 	g_data.udp_sockets = (int *)malloc(sizeof(int) * g_data.squeries);
 	/* Starting at index 1 TODO: Remove + 1 to malloc ? */
-	g_data.queries = (t_query *)malloc(sizeof(t_query) * (g_data.tqueries + 1));
+	g_data.queries = (t_query *)malloc(sizeof(t_query) * (g_data.tqueries));
+	ft_memset(g_data.queries, 0, sizeof(t_query) * (g_data.tqueries));
 	if (!g_data.udp_sockets || !g_data.queries) {
 		fprintf(stderr, "%s: %s: Malloc error\n", path, destination);
 		return end(&g_data, 1);

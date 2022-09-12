@@ -42,11 +42,13 @@
 	struct addrinfo	*ai_next;
 }; */
 
-#define SENT 0
-#define RECEIVED 1
-#define TIMEOUT 2
-#define NOT_DISPLAYED 3
-#define DISPLAYED 4
+#define NOT_USED 0
+#define SENT 1
+#define RECEIVED 2
+#define RECEIVED_END 3
+#define TIMEOUT 4
+#define NOT_DISPLAYED 5
+#define DISPLAYED 6
 
 /* Index of the current querry when sending */
 #define CURRENT_QUERY g_data->port-g_data->sport
@@ -78,6 +80,8 @@ typedef struct	s_data {
 	unsigned int		sttl;
 	unsigned int		port;
 	unsigned int		sport;
+	uint8_t				reached;
+	uint8_t				drop;
 
 	/* Select related */
 	fd_set				udpfds;
