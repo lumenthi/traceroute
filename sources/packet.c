@@ -38,6 +38,7 @@ static int send_packet(t_data *g_data, int rsocket)
 	}
 
 	g_data->queries[CURRENT_QUERY].port = g_data->port;
+	g_data->queries[CURRENT_QUERY].ttl = g_data->ttl;
 	g_data->queries[CURRENT_QUERY].status = SENT;
 
 	return rsocket;
@@ -67,6 +68,7 @@ static void debug_queries(t_query *queries, unsigned int limit)
 		printf("| Index: %d\n", i);
 		printf("| IPv4: %s\n", queries[i].ipv4);
 		printf("| Port: %d\n", queries[i].port);
+		printf("| Time to live: %d\n", queries[i].ttl);
 		printf("| Status: %s\n", status[queries[i].status]);
 		printf("+----------------\n");
 		i++;
@@ -147,7 +149,7 @@ static int receive_packet(t_data *g_data, int rsocket)
 				&receiver_len) <= 0)
 	{
 		/* TODO: Timedout ? */
-		fprintf(stderr, "Failed to receive packet\n");
+		// fprintf(stderr, "Failed to receive packet\n");
 		g_data->drop = 1;
 		return -1;
 	}
@@ -210,7 +212,7 @@ static int	udp_iterate(t_data *g_data)
 		if (FD_ISSET(g_data->udp_sockets[i], &g_data->udpfds)) {
 			send_packet(g_data, g_data->udp_sockets[i]); /* TODO: Error check */
 			g_data->port++;
-			g_data->ttl = g_data->sttl+1 + ((g_data->port - g_data->sport) / 3);
+			g_data->ttl = g_data->sttl + ((CURRENT_QUERY) / 3);
 		}
 		i++;
 	}
@@ -254,7 +256,6 @@ static void sort_queries(t_data *g_data)
 		while (j < g_data->tqueries) {
 			/* SWAP */
 			if (queries[i].port < queries[j].port) {
-				printf("[*] SWAP\n");
 				tmp = queries[i];
 				queries[i] = queries[j];
 				queries[j] = tmp;
@@ -267,22 +268,41 @@ static void sort_queries(t_data *g_data)
 
 static int print_everything(t_data *g_data)
 {
-	//t_query *queries = g_data->queries;
+	t_query *queries = g_data->queries;
 	unsigned int i = 0;
-	//unsigned char *probe_address = NULL;
-	//unsigned int probe_sport;
 
-	(void)print_packet;
 	sort_queries(g_data);
-	debug_queries(g_data->queries, g_data->tqueries);
+	// debug_queries(g_data->queries, g_data->tqueries);
 
 	while (i < g_data->tqueries) {
-		//if (probe
-		//if (probe_address
-		//printf();
+		if (queries[i].status != DISPLAYED && queries[i].status != NOT_USED) {
+			if (ft_strcmp(g_data->aprobe, (char*)&queries[i].ipv4)) {
+				g_data->aprobe = (char *)&queries[i].ipv4;
+				g_data->cprobe++;
+				g_data->caddress = 0;
+				g_data->nprobe = 0;
+				printf(" %d %s (%s)  ", g_data->cprobe, g_data->aprobe, g_data->aprobe);
+			}
+			if (g_data->caddress < 3) {
+				printf("0.00 ms ");
+				if (g_data->nprobe == 1)
+					printf("\n");
+				queries[i].status = DISPLAYED;
+				g_data->caddress++;
+			}
+			else {
+				g_data->nprobe = 1;
+			}
+		}
 		i++;
 	}
 
+	/* TODO: Remove void casts */
+	(void)print_packet;
+	(void)sort_queries;
+	(void)debug_queries;
+	// sort_queries(g_data);
+	// debug_queries(g_data->queries, g_data->tqueries);
 	if (CURRENT_QUERY >= g_data->tqueries || g_data->reached)
 		return 1; /* TODO: Remove, for debug until implemented */
 	return 0;
@@ -292,19 +312,14 @@ static int monitor_packet(t_data *g_data)
 {
 	g_data->drop = 0;
 	/* TODO: Potential infinite selects, set timeout */
-	if (g_data->port - g_data->sport < g_data->tqueries && !g_data->reached &&
+	if (CURRENT_QUERY < g_data->tqueries && !g_data->reached &&
 		select(g_data->maxfd+1, NULL, &g_data->udpfds, NULL, NULL))
 	{
 		printf("[*] UDP iteration\n");
 		udp_iterate(g_data); /* TODO: Error check */
 	}
-
-	if (g_data->port - g_data->sport < g_data->tqueries && !g_data->reached &&
-		select(g_data->maxfd+1, &g_data->icmpfd, NULL, NULL, NULL))
-	{
-		printf("[*] ICMP iteration\n");
-		icmp_receive(g_data); /* TODO: Error check */
-	}
+	printf("[*] ICMP iteration\n");
+	icmp_receive(g_data); /* TODO: Error check */
 
 	/* TODO: Print stop condition */
 	return print_everything(g_data);

@@ -55,7 +55,7 @@ int ft_traceroute(char *destination, uint8_t args, char *path)
 	g_data.args = args;
 	g_data.address = destination;
 	g_data.size = 32; /* Packet's content size */
-	g_data.hops = 16; /* 30 */
+	g_data.hops = 2; /* 30 */
 
 	/* Total queries */
 	g_data.tqueries = g_data.hops * 3;
@@ -76,12 +76,15 @@ int ft_traceroute(char *destination, uint8_t args, char *path)
 
 	g_data.reached = 0; /* Set to 1 when the server is reached */
 
+	g_data.cprobe = 0; /* Display related, current probe number */
+	g_data.aprobe = ""; /* Display related, IPv4 of current probe */
+
 	/* printf("Simultaneous queries: %d\n", g_data.squeries); */
 
 	g_data.udp_sockets = (int *)malloc(sizeof(int) * g_data.squeries);
 	/* Starting at index 1 TODO: Remove + 1 to malloc ? */
-	g_data.queries = (t_query *)malloc(sizeof(t_query) * (g_data.tqueries));
-	ft_memset(g_data.queries, 0, sizeof(t_query) * (g_data.tqueries));
+	g_data.queries = (t_query *)malloc(sizeof(t_query) * (g_data.tqueries+1));
+	ft_memset(g_data.queries, 0, sizeof(t_query) * (g_data.tqueries+1));
 	if (!g_data.udp_sockets || !g_data.queries) {
 		fprintf(stderr, "%s: %s: Malloc error\n", path, destination);
 		return end(&g_data, 1);

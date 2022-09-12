@@ -55,6 +55,7 @@
 
 typedef struct			s_query {
 	char				ipv4[INET_ADDRSTRLEN];
+	unsigned int		ttl;
 	unsigned int		port;
 	uint8_t				status;
 }						t_query;
@@ -95,6 +96,10 @@ typedef struct	s_data {
 	/* Dynamically allocated */
 	unsigned int		tqueries;
 	t_query				*queries;
+	char				*aprobe; /* Address of current probe */
+	unsigned int		caddress;
+	unsigned int		cprobe; /* Current probe counter */
+	uint8_t				nprobe; /* Next probe \n */
 }						t_data;
 
 
