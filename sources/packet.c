@@ -241,12 +241,12 @@ static void sort_queries(t_data *g_data)
 
 	while(i < g_data->tqueries) {
 		j = 0;
-		while (j < g_data->tqueries) {
+		while (j < g_data->tqueries - 1) {
 			/* SWAP */
-			if (queries[i].port < queries[j].port) {
-				tmp = queries[i];
-				queries[i] = queries[j];
-				queries[j] = tmp;
+			if (queries[j].port > queries[j+1].port) {
+				tmp = queries[j];
+				queries[j] = queries[j+1];
+				queries[j+1] = tmp;
 			}
 			j++;
 		}
@@ -259,10 +259,9 @@ static int print_everything(t_data *g_data)
 	t_query *queries = g_data->queries;
 	unsigned int i = 0;
 
-	(void)sort_queries;
 	(void)debug_queries;
-	//sort_queries(g_data);
-	//debug_queries(g_data->queries, g_data->tqueries);
+	sort_queries(g_data);
+	// debug_queries(g_data->queries, g_data->tqueries);
 
 	while (i < g_data->tqueries) {
 		if (queries[i].status != DISPLAYED && queries[i].status != NOT_USED) {
