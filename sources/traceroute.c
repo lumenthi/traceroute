@@ -61,7 +61,7 @@ int ft_traceroute(char *destination, uint8_t args, char *path)
 	g_data.tqueries = g_data.hops * 3;
 
 	/* Simultaneous queries calculation */
-	g_data.squeries = 1; /* 16 */
+	g_data.squeries = 16; /* 16 */
 	g_data.squeries = g_data.tqueries < g_data.squeries ?
 		g_data.tqueries : g_data.squeries;
 

@@ -44,10 +44,11 @@
 
 #define SENT 0
 #define RECEIVED 1
-#define NOT_DISPLAYED 2
-#define DISPLAYED 3
+#define TIMEOUT 2
+#define NOT_DISPLAYED 3
+#define DISPLAYED 4
 
-/* Index of the current querry */
+/* Index of the current querry when sending */
 #define CURRENT_QUERY g_data->port-g_data->sport
 
 typedef struct			s_query {

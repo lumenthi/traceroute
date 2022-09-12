@@ -55,33 +55,66 @@ static int send_packet(t_data *g_data, int rsocket)
 	return rsocket;
 }
 
+static unsigned int get_packet_index(t_query *queries, unsigned int port,
+	unsigned int limit)
+{
+	unsigned int i = 0;
+
+	while (i < limit) {
+		if (queries[i].port == port)
+			break;
+		i++;
+	}
+	return i;
+}
+
+static void debug_queries(t_query *queries, unsigned int limit)
+{
+	unsigned int i = 0;
+	char *status[] = {"SENT", "RECEIVED", "TIMEOUT", "NOT_DISPLAYED", "DISPLAYED"};
+
+	while (i < limit) {
+		printf("+----------------\n");
+		printf("| Index: %d\n", i);
+		printf("| IPv4: %s\n", queries[i].ipv4);
+		printf("| Port: %d\n", queries[i].port);
+		printf("| Status: %s\n", status[queries[i].status]);
+		printf("+----------------\n");
+		i++;
+	}
+}
+
 static int queries_informations(t_data *g_data, struct packet full_packet,
 	struct sockaddr_in *receiver)
 {
 	unsigned int port;
 	struct iphdr *ip_hdr;
 	struct udphdr *udp_hdr;
+	unsigned int index;
 
 	ip_hdr = (struct iphdr *)(&full_packet.content.msg);
 	udp_hdr = (struct udphdr *)((void *)ip_hdr+sizeof(struct iphdr));
 
 	port = ntohs(udp_hdr->dest);
 
-	printf("Index: %d\n", CURRENT_QUERY);
-	printf("Port: %d\n", port);
-	printf("Time to live: %d\n", ip_hdr->ttl);
+	/* TODO: Must find the right index by looking for port */
+	index = get_packet_index(g_data->queries, port, g_data->tqueries);
+
+	/* Gathered data */
+	// printf("Index: %d\n", index);
+	// printf("Port: %d\n", port);
+	// printf("Time to live: %d\n", ip_hdr->ttl);
 	// printf("Total: %d\n", g_data->tqueries);
 	// printf("Adddr: %s\n", inet_ntoa(((struct sockaddr_in *)&receiver)->sin_addr));
 	// printf("Port: %d\n", ((struct sockaddr_in *)&receiver)->sin_port);
 
-	/* TODO: Must find the right index by looking for port */
-
 	ft_strncpy(
-		g_data->queries[CURRENT_QUERY].ipv4,
-		inet_ntoa(((struct sockaddr_in *)&receiver)->sin_addr),
+		g_data->queries[index].ipv4,
+		inet_ntoa(receiver->sin_addr),
 		INET_ADDRSTRLEN
 	);
-	g_data->queries[CURRENT_QUERY].status = RECEIVED;
+	/* TODO: Set TIMEOUT status if timedout */
+	g_data->queries[index].status = RECEIVED;
 	return 0;
 }
 
@@ -235,8 +268,9 @@ void traceroute_loop(t_data *g_data)
 
 	create_sockets(g_data); /* TODO: Error check */
 
-	while (!(ret = monitor_packet(g_data))) {
-	}
+	while (!(ret = monitor_packet(g_data)));
+
+	debug_queries(g_data->queries, g_data->tqueries);
 
 	clear_sockets(g_data);
 }
