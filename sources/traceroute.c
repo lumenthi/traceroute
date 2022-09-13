@@ -26,6 +26,7 @@ static int resolve(char *host, t_data *g_data)
 
 int print_help()
 {
+	/* TODO: Help and bonus options */
 	printf("* Printing help *\n");
 	return 1;
 }

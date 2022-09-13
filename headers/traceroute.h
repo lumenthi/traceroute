@@ -46,9 +46,7 @@
 #define SENT 1
 #define RECEIVED 2
 #define RECEIVED_END 3
-#define TIMEOUT 4
-#define NOT_DISPLAYED 5
-#define DISPLAYED 6
+#define DISPLAYED 4
 
 /* Index of the current querry when sending */
 #define CURRENT_QUERY g_data->port-g_data->sport
@@ -57,6 +55,8 @@ typedef struct			s_query {
 	char				ipv4[INET_ADDRSTRLEN];
 	unsigned int		ttl;
 	unsigned int		port;
+	struct timeval		start_time;
+	struct timeval		end_time;
 	uint8_t				status;
 }						t_query;
 
@@ -178,17 +178,5 @@ int		ft_traceroute(char *destination, uint8_t args, char *path);
 
 /* packet.c */
 void	traceroute_loop(t_data *g_data);
-
-/* ====NOTES====
-
-- Default packet size: 60 ?
-- www.baidu.com
-- Entering the traceroute host command without options sends three 40-byte ICMP datagrams with an initial TTL of 1, a maximum TTL of 30, a timeout period of 5 seconds, and a TOS specification of 0 to destination UDP port number 33434. For each host in the processed path, the initial TTL for each host and the destination UDP port number for each packet sent are incremented by one.
-- 16 Packets simultaneously
-- Port incrementation
-- TCP (SOCK_STREAM)
-- UDP (SOCK_DGRAM)
-- sudo tcpdump udp -X
-*/
 
 #endif

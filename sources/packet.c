@@ -39,9 +39,17 @@ static int send_packet(t_data *g_data, int rsocket)
 
 	// printf("[*] Sending: Index: %d\n", CURRENT_QUERY);
 	// printf("[*] Sending: Max Index: %d\n", g_data->tqueries);
+
 	g_data->queries[CURRENT_QUERY].port = g_data->port;
 	g_data->queries[CURRENT_QUERY].ttl = g_data->ttl;
 	g_data->queries[CURRENT_QUERY].status = SENT;
+
+	/* Filling start time for the query */
+	if ((gettimeofday(&g_data->queries[CURRENT_QUERY].start_time, NULL)) < 0) {
+		fprintf(stderr, "Failed to set packet sending time\n");
+		return -1;
+	}
+
 
 	return rsocket;
 }
@@ -63,7 +71,7 @@ static void debug_queries(t_query *queries, unsigned int limit)
 {
 	unsigned int i = 0;
 	char *status[] = {"NOT_USED", "SENT", "RECEIVED", "RECEIVED_END",
-		"TIMEOUT", "NOT_DISPLAYED", "DISPLAYED"};
+		"DISPLAYED"};
 
 	while (i < limit) {
 		printf("+----------------\n");
@@ -86,6 +94,13 @@ static int queries_informations(t_data *g_data, struct packet full_packet,
 	struct udphdr *udp_hdr;
 	struct icmphdr *icmp_hdr;
 	unsigned int index;
+	struct timeval end_time;
+
+	/* First thing to do, do not waste usec */
+	if ((gettimeofday(&end_time, NULL)) < 0) {
+		fprintf(stderr, "Failed to set packet receiving time\n");
+		return -1;
+	}
 
 	icmp_hdr = (struct icmphdr *)(&full_packet.content.hdr);
 	ip_hdr = (struct iphdr *)(&full_packet.content.msg);
@@ -115,6 +130,9 @@ static int queries_informations(t_data *g_data, struct packet full_packet,
 		inet_ntoa(receiver->sin_addr),
 		INET_ADDRSTRLEN
 	);
+
+	g_data->queries[index].end_time.tv_sec = end_time.tv_sec;
+	g_data->queries[index].end_time.tv_usec = end_time.tv_usec;
 
 	if (type == ICMP_TIME_EXCEEDED)
 		g_data->queries[index].status = RECEIVED;
@@ -261,10 +279,15 @@ static void sort_queries(t_data *g_data)
 
 static void print_query(t_query querry)
 {
+	long int sec = querry.end_time.tv_sec - querry.start_time.tv_sec;
+	long int usec = querry.end_time.tv_usec - querry.start_time.tv_usec;
+
+	long long total_usec = sec*1000000+usec;
+
 	if (querry.status == SENT)
 		printf("* ");
 	else
-		printf("0.00 ms  ");
+		printf("%lld.%03lld ms  ", total_usec/1000, total_usec%1000);
 }
 
 static int print_everything(t_data *g_data)

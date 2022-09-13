@@ -81,6 +81,8 @@ When an error occurs (ex: TTL expired) the icmp protocol sends back an icmp pack
 
 = TODO =
 
+www.baidu.com
+
 vagrant@stretch:/vagrant$ traceroute localhost
 traceroute to localhost (127.0.0.1), 30 hops max, 60 byte packets
  1  localhost (127.0.0.1)  0.025 ms  0.009 ms  0.008 ms
