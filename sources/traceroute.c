@@ -26,8 +26,16 @@ static int resolve(char *host, t_data *g_data)
 
 int print_help()
 {
-	/* TODO: Help and bonus options */
-	printf("* Printing help *\n");
+	printf("Usage\n"
+		"  traceroute [options] <destination>\n\n"
+		"Options:\n"
+		"  -f <first_ttl>     Start from the first_ttl hop (default is 1)\n"
+		"  -h                 print help and exit\n"
+		"  -m <max_ttl>       Set the max number of hops (default is 30)\n"
+		"  -N <squeries>      Set the number of probes to be tried simultaneously (default is 16)\n"
+		"  -n                 Do not resolve IP addresses to their domain names\n"
+		"  -p <port>          Set the destination port to use (default is 33434)\n"
+		"  -q <nqueries>      Set the number of probes per each hop (default is 3)\n");
 	return 1;
 }
 

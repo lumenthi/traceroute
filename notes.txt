@@ -89,8 +89,8 @@ When an error occurs (ex: TTL expired) the icmp protocol sends back an icmp pack
 -p port, --port=port
     For UDP tracing, specifies the destination port base traceroute will use.
 
--w max[,here,near], --wait=max[,here,near]
-    Determines how long to wait for a response to a probe.
+-q nqueries, --queries=nqueries
+    Set the number of probes per each hop. Default is 3
 
 -n Do not try to map IP addresses to host names when displaying them.
 
