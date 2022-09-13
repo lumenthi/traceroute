@@ -371,9 +371,8 @@ static int monitor_packet(t_data *g_data)
 {
 	g_data->drop = 0;
 	g_data->sent = 0;
-	/* TODO: Potential infinite selects, set timeout */
 	if (CURRENT_QUERY < g_data->tqueries && !g_data->reached &&
-		select(g_data->maxfd+1, NULL, &g_data->udpfds, NULL, NULL))
+		select(g_data->maxfd+1, NULL, &g_data->udpfds, NULL, &g_data->timeout))
 	{
 		/* TODO: REMOVE UNWANTED COMMENTS */
 		// printf("[*] UDP iteration\n");
