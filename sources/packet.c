@@ -145,7 +145,6 @@ static int receive_packet(t_data *g_data, int rsocket)
 	receiver_len = sizeof(receiver);
 	ft_memset(&receiver, 0, receiver_len);
 
-	/* TODO: Packet validity */
 	if (recvfrom(rsocket,
 				&rec_packet,
 				sizeof(rec_packet),
@@ -153,8 +152,7 @@ static int receive_packet(t_data *g_data, int rsocket)
 				&receiver,
 				&receiver_len) <= 0)
 	{
-		/* TODO: Timedout ? */
-		// fprintf(stderr, "Failed to receive packet\n");
+		/* Packet timed out, drop next incoming packets */
 		g_data->drop = 1;
 		return -1;
 	}
@@ -164,7 +162,7 @@ static int receive_packet(t_data *g_data, int rsocket)
 	return 0;
 }
 
-static int	 create_sockets(t_data *g_data)
+static int create_sockets(t_data *g_data)
 {
 	unsigned int i = 0;
 	FD_ZERO(&g_data->udpfds);
@@ -194,7 +192,7 @@ static int	 create_sockets(t_data *g_data)
 	return 0;
 }
 
-static void	clear_sockets(t_data *g_data)
+static void clear_sockets(t_data *g_data)
 {
 	unsigned int i = 0;
 
@@ -311,10 +309,9 @@ static int print_everything(t_data *g_data)
 		}
 		i++;
 	}
-
 	/* TODO: Remove void casts */
 	if (CURRENT_QUERY >= g_data->tqueries || g_data->reached)
-		return 1; /* TODO: Remove, for debug until implemented */
+		return 1;
 	return 0;
 }
 
@@ -333,7 +330,6 @@ static int monitor_packet(t_data *g_data)
 	// printf("[*] ICMP iteration\n");
 	icmp_receive(g_data); /* TODO: Error check */
 
-	/* TODO: Print stop condition */
 	return print_everything(g_data);
 }
 
@@ -345,7 +341,7 @@ void traceroute_loop(t_data *g_data)
 		g_data->address, g_data->ipv4, g_data->hops,
 		sizeof(struct iphdr)+sizeof(struct udphdr)+g_data->size);
 
-	if ((create_sockets(g_data)) == -1) /* TODO: Error check */
+	if ((create_sockets(g_data)) == -1)
 		return;
 
 	while (!(ret = monitor_packet(g_data)));

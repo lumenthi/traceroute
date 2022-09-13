@@ -89,4 +89,6 @@ traceroute to localhost (127.0.0.1), 30 hops max, 60 byte packets
 
 sudo ./ft_traceroute 6
 
+spaces after content ?
+
 Parallel packets handling ?
