@@ -254,12 +254,21 @@ static void sort_queries(t_data *g_data)
 	}
 }
 
+static void print_query(t_query querry)
+{
+	if (querry.status == SENT)
+		printf("* ");
+	else
+		printf("0.00 ms ");
+}
+
 static int print_everything(t_data *g_data)
 {
 	t_query *queries = g_data->queries;
 	unsigned int i = 0;
 
 	(void)debug_queries;
+	(void)sort_queries;
 	sort_queries(g_data);
 	// debug_queries(g_data->queries, g_data->tqueries);
 
@@ -270,16 +279,22 @@ static int print_everything(t_data *g_data)
 					printf("\n");
 				g_data->tprobe = queries[i].ttl;
 				g_data->aprobe = (char *)&queries[i].ipv4;
-				printf(" %d %s (%s)  ", g_data->cprobe, g_data->aprobe, g_data->aprobe);
+				if (g_data->cprobe < 10)
+					printf(" %d  ", g_data->cprobe);
+				else
+					printf("%d  ", g_data->cprobe);
+				if (queries[i].status != SENT)
+					printf("%s (%s)  ", g_data->aprobe, g_data->aprobe);
 				g_data->cttl = 0;
 				g_data->cprobe++;
 			}
 			else if (ft_strcmp(g_data->aprobe, (char*)&queries[i].ipv4)) {
 				g_data->aprobe = (char *)&queries[i].ipv4;
-				printf("%s (%s)  ", g_data->aprobe, g_data->aprobe);
+				if (queries[i].status != SENT)
+					printf("%s (%s)  ", g_data->aprobe, g_data->aprobe);
 			}
 			if (g_data->cttl < 3) {
-				printf("0.00 ms ");
+				print_query(queries[i]);
 				if (queries[i].status == RECEIVED_END && g_data->cttl == 2) {
 					return 1;
 				}

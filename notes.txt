@@ -78,3 +78,8 @@ When an error occurs (ex: TTL expired) the icmp protocol sends back an icmp pack
 = BONUSES =
 -f first_ttl, --first=first_ttl
     Specifies with what TTL to start. Defaults to 1.
+
+= TODO =
+
+- Twice the same address ?
+6  195.154.1.104 (195.154.1.104)  0.00 ms 195.154.1.104 (195.154.1.104)  0.00 ms 0.00 ms
