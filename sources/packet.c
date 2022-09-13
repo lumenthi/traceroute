@@ -34,7 +34,7 @@ static int send_packet(t_data *g_data, int rsocket)
 		g_data->host_addr, sizeof(*(g_data->host_addr))) <= 0)
 	{
 		fprintf(stderr, "Failed to send packet\n");
-		return -1;
+		return -2;
 	}
 
 	// printf("[*] Sending: Index: %d\n", CURRENT_QUERY);
@@ -232,7 +232,8 @@ static int	udp_iterate(t_data *g_data)
 		/* Sent all packets */
 		if (CURRENT_QUERY < g_data->tqueries &&
 			FD_ISSET(g_data->udp_sockets[i], &g_data->udpfds)) {
-			send_packet(g_data, g_data->udp_sockets[i]); /* TODO: Error check */
+			if (send_packet(g_data, g_data->udp_sockets[i]) == -2)
+				return -1;
 			g_data->port++;
 			g_data->ttl = g_data->sttl + ((CURRENT_QUERY) / 3);
 			g_data->sent++;
@@ -248,7 +249,7 @@ static int	icmp_receive(t_data *g_data)
 
 	if (FD_ISSET(g_data->icmp_socket, &g_data->icmpfd)) {
 		while (i < g_data->sent) {
-			receive_packet(g_data, g_data->icmp_socket); /* TODO: Error check */
+			receive_packet(g_data, g_data->icmp_socket);
 			i++;
 		}
 	}
@@ -349,6 +350,7 @@ static int print_everything(t_data *g_data)
 			if (g_data->cttl < 3) {
 				print_query(queries[i], g_data->cttl);
 				if (queries[i].status == RECEIVED_END && g_data->cttl == 2) {
+					printf("\n");
 					return 1;
 				}
 				g_data->cttl++;
@@ -358,8 +360,10 @@ static int print_everything(t_data *g_data)
 		i++;
 	}
 	/* TODO: Remove void casts */
-	if (CURRENT_QUERY >= g_data->tqueries || g_data->reached)
+	if (CURRENT_QUERY >= g_data->tqueries || g_data->reached) {
+		printf("\n");
 		return 1;
+	}
 	return 0;
 }
 
@@ -373,10 +377,11 @@ static int monitor_packet(t_data *g_data)
 	{
 		/* TODO: REMOVE UNWANTED COMMENTS */
 		// printf("[*] UDP iteration\n");
-		udp_iterate(g_data); /* TODO: Error check */
+		if (udp_iterate(g_data) < 0)
+			return 1;
 	}
 	// printf("[*] ICMP iteration\n");
-	icmp_receive(g_data); /* TODO: Error check */
+	icmp_receive(g_data);
 
 	return print_everything(g_data);
 }
@@ -393,8 +398,6 @@ void traceroute_loop(t_data *g_data)
 		return;
 
 	while (!(ret = monitor_packet(g_data)));
-
-	printf("\n");
 
 	clear_sockets(g_data);
 }

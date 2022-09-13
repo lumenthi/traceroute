@@ -31,7 +31,7 @@ int print_help()
 	return 1;
 }
 
-int	end(t_data *g_data, int code)
+int end(t_data *g_data, int code)
 {
 	/* Freeing stuff */
 	if (g_data->udp_sockets)
@@ -50,6 +50,12 @@ int ft_traceroute(char *destination, uint8_t args, char *path)
 
 	if (!destination || ARGS_H)
 		return print_help();
+
+	if (getuid() != 0) {
+		fprintf(stderr, "%s: %s: Not allowed to create raw sockets, run as root\n",
+			path, destination);
+		return 1;
+	}
 
 	/* Options */
 	g_data.path = path;
