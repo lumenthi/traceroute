@@ -265,22 +265,26 @@ static int print_everything(t_data *g_data)
 
 	while (i < g_data->tqueries) {
 		if (queries[i].status != DISPLAYED && queries[i].status != NOT_USED) {
-			if (ft_strcmp(g_data->aprobe, (char*)&queries[i].ipv4)) {
-				if (g_data->cprobe != 0)
+			if (g_data->tprobe != queries[i].ttl) {
+				if (g_data->cprobe != 1)
 					printf("\n");
+				g_data->tprobe = queries[i].ttl;
 				g_data->aprobe = (char *)&queries[i].ipv4;
-				g_data->cprobe++;
-				g_data->caddress = 0;
-				g_data->nprobe = 0;
 				printf(" %d %s (%s)  ", g_data->cprobe, g_data->aprobe, g_data->aprobe);
+				g_data->cttl = 0;
+				g_data->cprobe++;
 			}
-			if (g_data->caddress < 3) {
+			else if (ft_strcmp(g_data->aprobe, (char*)&queries[i].ipv4)) {
+				g_data->aprobe = (char *)&queries[i].ipv4;
+				printf("%s (%s)  ", g_data->aprobe, g_data->aprobe);
+			}
+			if (g_data->cttl < 3) {
 				printf("0.00 ms ");
+				if (queries[i].status == RECEIVED_END && g_data->cttl == 2) {
+					return 1;
+				}
 				queries[i].status = DISPLAYED;
-				g_data->caddress++;
-			}
-			else {
-				g_data->nprobe = 1;
+				g_data->cttl++;
 			}
 		}
 		i++;

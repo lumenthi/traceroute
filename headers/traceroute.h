@@ -77,6 +77,7 @@ typedef struct	s_data {
 	unsigned int		hops; /* Max hops */
 	unsigned int		size; /* Packet size */
 	unsigned int		squeries; /* Simultaneous queries */
+	unsigned int		tqueries; /* Total queries */
 	unsigned int		ttl;
 	unsigned int		sttl;
 	unsigned int		port;
@@ -94,12 +95,13 @@ typedef struct	s_data {
 
 	/* Display related */
 	/* Dynamically allocated */
-	unsigned int		tqueries;
-	t_query				*queries;
+	t_query				*queries; /* Informations about queries */
 	char				*aprobe; /* Address of current probe */
-	unsigned int		caddress;
-	unsigned int		cprobe; /* Current probe counter */
-	uint8_t				nprobe; /* Next probe \n */
+	unsigned int		tprobe; /* TTL of current probe */
+	unsigned int		cprobe; /* Probe counter */
+	uint8_t				pend; /* Already reached end ? */
+
+	unsigned int		cttl; /* Packet count for a ttl */
 }						t_data;
 
 
