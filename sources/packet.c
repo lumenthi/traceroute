@@ -277,17 +277,23 @@ static void sort_queries(t_data *g_data)
 	}
 }
 
-static void print_query(t_query querry)
+static void print_query(t_query querry, unsigned counter)
 {
 	long int sec = querry.end_time.tv_sec - querry.start_time.tv_sec;
 	long int usec = querry.end_time.tv_usec - querry.start_time.tv_usec;
 
 	long long total_usec = sec*1000000+usec;
 
-	if (querry.status == SENT)
-		printf("* ");
-	else
-		printf("%lld.%03lld ms  ", total_usec/1000, total_usec%1000);
+	if (querry.status == SENT) {
+		printf("*");
+		if (counter < 2)
+			printf(" ");
+	}
+	else {
+		printf(" %lld.%03lld ms", total_usec/1000, total_usec%1000);
+		if (counter < 2)
+			printf(" ");
+	}
 }
 
 static char *get_hostname(t_data *g_data, char *ipv4)
@@ -331,17 +337,17 @@ static int print_everything(t_data *g_data)
 				else
 					printf("%d  ", g_data->cprobe);
 				if (queries[i].status != SENT)
-					printf("%s (%s)  ", get_hostname(g_data, g_data->aprobe), g_data->aprobe);
+					printf("%s (%s) ", get_hostname(g_data, g_data->aprobe), g_data->aprobe);
 				g_data->cttl = 0;
 				g_data->cprobe++;
 			}
 			else if (ft_strcmp(g_data->aprobe, queries[i].ipv4)) {
 				ft_strncpy(g_data->aprobe, queries[i].ipv4, INET_ADDRSTRLEN);
 				if (queries[i].status != SENT)
-					printf("%s (%s)  ", get_hostname(g_data, g_data->aprobe), g_data->aprobe);
+					printf("%s (%s) ", get_hostname(g_data, g_data->aprobe), g_data->aprobe);
 			}
 			if (g_data->cttl < 3) {
-				print_query(queries[i]);
+				print_query(queries[i], g_data->cttl);
 				if (queries[i].status == RECEIVED_END && g_data->cttl == 2) {
 					return 1;
 				}
