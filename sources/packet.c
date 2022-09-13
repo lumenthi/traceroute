@@ -37,6 +37,8 @@ static int send_packet(t_data *g_data, int rsocket)
 		return -1;
 	}
 
+	// printf("[*] Sending: Index: %d\n", CURRENT_QUERY);
+	// printf("[*] Sending: Max Index: %d\n", g_data->tqueries);
 	g_data->queries[CURRENT_QUERY].port = g_data->port;
 	g_data->queries[CURRENT_QUERY].ttl = g_data->ttl;
 	g_data->queries[CURRENT_QUERY].status = SENT;
@@ -209,10 +211,12 @@ static int	udp_iterate(t_data *g_data)
 	unsigned int i = 0;
 	while (i < g_data->squeries) {
 		/* Sent all packets */
-		if (FD_ISSET(g_data->udp_sockets[i], &g_data->udpfds)) {
+		if (CURRENT_QUERY < g_data->tqueries &&
+			FD_ISSET(g_data->udp_sockets[i], &g_data->udpfds)) {
 			send_packet(g_data, g_data->udp_sockets[i]); /* TODO: Error check */
 			g_data->port++;
 			g_data->ttl = g_data->sttl + ((CURRENT_QUERY) / 3);
+			g_data->sent++;
 		}
 		i++;
 	}
@@ -224,7 +228,7 @@ static int	icmp_receive(t_data *g_data)
 	unsigned int i = 0;
 
 	if (FD_ISSET(g_data->icmp_socket, &g_data->icmpfd)) {
-		while (i < g_data->squeries) {
+		while (i < g_data->sent) {
 			receive_packet(g_data, g_data->icmp_socket); /* TODO: Error check */
 			i++;
 		}
@@ -278,7 +282,7 @@ static int print_everything(t_data *g_data)
 				if (g_data->cprobe != 1)
 					printf("\n");
 				g_data->tprobe = queries[i].ttl;
-				g_data->aprobe = (char *)&queries[i].ipv4;
+				ft_strncpy(g_data->aprobe, queries[i].ipv4, INET_ADDRSTRLEN);
 				if (g_data->cprobe < 10)
 					printf(" %d  ", g_data->cprobe);
 				else
@@ -288,8 +292,8 @@ static int print_everything(t_data *g_data)
 				g_data->cttl = 0;
 				g_data->cprobe++;
 			}
-			else if (ft_strcmp(g_data->aprobe, (char*)&queries[i].ipv4)) {
-				g_data->aprobe = (char *)&queries[i].ipv4;
+			else if (ft_strcmp(g_data->aprobe, queries[i].ipv4)) {
+				ft_strncpy(g_data->aprobe, queries[i].ipv4, INET_ADDRSTRLEN);
 				if (queries[i].status != SENT)
 					printf("%s (%s)  ", g_data->aprobe, g_data->aprobe);
 			}
@@ -298,9 +302,9 @@ static int print_everything(t_data *g_data)
 				if (queries[i].status == RECEIVED_END && g_data->cttl == 2) {
 					return 1;
 				}
-				queries[i].status = DISPLAYED;
 				g_data->cttl++;
 			}
+			queries[i].status = DISPLAYED;
 		}
 		i++;
 	}
@@ -314,6 +318,7 @@ static int print_everything(t_data *g_data)
 static int monitor_packet(t_data *g_data)
 {
 	g_data->drop = 0;
+	g_data->sent = 0;
 	/* TODO: Potential infinite selects, set timeout */
 	if (CURRENT_QUERY < g_data->tqueries && !g_data->reached &&
 		select(g_data->maxfd+1, NULL, &g_data->udpfds, NULL, NULL))

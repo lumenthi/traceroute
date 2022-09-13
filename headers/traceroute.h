@@ -82,6 +82,7 @@ typedef struct	s_data {
 	unsigned int		sttl;
 	unsigned int		port;
 	unsigned int		sport;
+	unsigned int		sent;
 	uint8_t				reached;
 	uint8_t				drop;
 
@@ -96,7 +97,7 @@ typedef struct	s_data {
 	/* Display related */
 	/* Dynamically allocated */
 	t_query				*queries; /* Informations about queries */
-	char				*aprobe; /* Address of current probe */
+	char				aprobe[INET_ADDRSTRLEN]; /* Address of current probe */
 	unsigned int		tprobe; /* TTL of current probe */
 	unsigned int		cprobe; /* Probe counter */
 	uint8_t				pend; /* Already reached end ? */
