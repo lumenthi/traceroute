@@ -55,7 +55,7 @@ int ft_traceroute(char *destination, uint8_t args, char *path)
 	g_data.args = args;
 	g_data.address = destination;
 	g_data.size = 32; /* Packet's content size */
-	g_data.hops = 7; /* 30 */
+	g_data.hops = 30; /* 30 */
 
 	/* Total queries */
 	g_data.tqueries = g_data.hops * 3;
@@ -79,8 +79,11 @@ int ft_traceroute(char *destination, uint8_t args, char *path)
 	g_data.tprobe = 0;
 	g_data.pend = 0;
 	g_data.cprobe = g_data.sttl; /* Display related, current probe number */
-	ft_bzero(g_data.aprobe, sizeof(g_data.aprobe));
-	// g_data.aprobe = ""; /* Display related, IPv4 of current probe */
+	ft_bzero(g_data.aprobe, sizeof(g_data.aprobe)); /* Display related, IPv4 of current probe */
+
+	/* Default timeout for a query (5 seconds) */
+	g_data.timeout.tv_sec = 5;
+	g_data.timeout.tv_usec = 0;
 
 	/* printf("Simultaneous queries: %d\n", g_data.squeries); */
 

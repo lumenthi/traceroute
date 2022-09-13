@@ -83,6 +83,7 @@ typedef struct	s_data {
 	unsigned int		port;
 	unsigned int		sport;
 	unsigned int		sent;
+	struct timeval		timeout;
 	uint8_t				reached;
 	uint8_t				drop;
 

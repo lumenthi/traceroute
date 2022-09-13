@@ -94,14 +94,18 @@ static int queries_informations(t_data *g_data, struct packet full_packet,
 	port = ntohs(udp_hdr->dest);
 	type = icmp_hdr->type;
 
-	/* TODO: Error check */
 	index = get_packet_index(g_data->queries, port, g_data->tqueries);
+	/* Invalid packet */
+	if (index >= g_data->tqueries) {
+		// printf("[*] Dropping packet\n");
+		return 0;
+	}
 
 	/* Debug gathered data */
 	// printf("Index: %d\n", index);
 	// printf("Port: %d\n", port);
 	// printf("Time to live: %d\n", ip_hdr->ttl);
-	// printf("Total: %d\n", g_data->tqueries);
+	// printf("Total queries: %d\n", g_data->tqueries);
 	// printf("Adddr: %s\n", inet_ntoa(((struct sockaddr_in *)&receiver)->sin_addr));
 	// printf("Port: %d\n", ((struct sockaddr_in *)&receiver)->sin_port);
 	// printf("Status: %d\n", icmp_hdr->type);
@@ -127,13 +131,11 @@ static int receive_packet(t_data *g_data, int rsocket)
 	struct packet	rec_packet;
 	struct sockaddr receiver;
 	socklen_t		receiver_len;
-	/* Default timeout (seconds) */
-	struct timeval	timeout = {5, 0};
 	int				flags = g_data->drop ? MSG_DONTWAIT : 0;
 
 	/* Set receive timeout */
 	if (setsockopt(rsocket, SOL_SOCKET, SO_RCVTIMEO,
-		(const char*)&timeout, sizeof(timeout)) != 0) {
+		(const char*)&g_data->timeout, sizeof(g_data->timeout)) != 0) {
 		fprintf(stderr, "Failed to set receiver's timeout\n");
 		return -1;
 	}
@@ -143,6 +145,7 @@ static int receive_packet(t_data *g_data, int rsocket)
 	receiver_len = sizeof(receiver);
 	ft_memset(&receiver, 0, receiver_len);
 
+	/* TODO: Packet validity */
 	if (recvfrom(rsocket,
 				&rec_packet,
 				sizeof(rec_packet),
@@ -263,7 +266,7 @@ static void print_query(t_query querry)
 	if (querry.status == SENT)
 		printf("* ");
 	else
-		printf("0.00 ms ");
+		printf("0.00 ms  ");
 }
 
 static int print_everything(t_data *g_data)
