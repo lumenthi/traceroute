@@ -102,6 +102,7 @@ typedef struct	s_data {
 	unsigned int		tprobe; /* TTL of current probe */
 	unsigned int		cprobe; /* Probe counter */
 	uint8_t				pend; /* Already reached end ? */
+	char				host[NI_MAXHOST]; /* Hostname of current probe */
 
 	unsigned int		cttl; /* Packet count for a ttl */
 }						t_data;

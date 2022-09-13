@@ -76,10 +76,29 @@ $ sudo strace traceroute www.google.com -m 2 2>&1 | grep "IPPROTO_UDP" | wc -l
 When an error occurs (ex: TTL expired) the icmp protocol sends back an icmp packet with the packet that failed in its content.
 
 = BONUSES =
+
 -f first_ttl, --first=first_ttl
     Specifies with what TTL to start. Defaults to 1.
 
+-m max_ttl, --max-hops=max_ttl
+    Specifies the maximum number of hops (max time-to-live value) traceroute will probe. The default is 30.
+
+-N squeries, --sim-queries=squeries
+    Specifies the number of probe packets sent out simultaneously.
+
+-p port, --port=port
+    For UDP tracing, specifies the destination port base traceroute will use.
+
+-w max[,here,near], --wait=max[,here,near]
+    Determines how long to wait for a response to a probe.
+
+-n Do not try to map IP addresses to host names when displaying them.
+
+- Map IP addresses (Resolve)
+
 = TODO =
+
+getuid, getpid check rights
 
 www.baidu.com
 
@@ -91,6 +110,6 @@ traceroute to localhost (127.0.0.1), 30 hops max, 60 byte packets
 
 sudo ./ft_traceroute 6
 
-spaces after content ?
+trailing spaces
 
 Parallel packets handling ?

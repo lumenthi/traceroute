@@ -290,6 +290,25 @@ static void print_query(t_query querry)
 		printf("%lld.%03lld ms  ", total_usec/1000, total_usec%1000);
 }
 
+static char *get_hostname(t_data *g_data, char *ipv4)
+{
+	/* Bonus */
+	struct sockaddr_in sa;
+	socklen_t len;
+
+	ft_memset(&sa, 0, sizeof(struct sockaddr_in));
+
+	/* For IPv4*/
+	sa.sin_family = AF_INET;
+	sa.sin_addr.s_addr = inet_addr(ipv4);
+	len = sizeof(struct sockaddr_in);
+
+	if (getnameinfo((struct sockaddr *)&sa, len, g_data->host, NI_MAXHOST,
+		NULL, 0, NI_NAMEREQD))
+		return ipv4;
+	return g_data->host;
+}
+
 static int print_everything(t_data *g_data)
 {
 	t_query *queries = g_data->queries;
@@ -312,14 +331,14 @@ static int print_everything(t_data *g_data)
 				else
 					printf("%d  ", g_data->cprobe);
 				if (queries[i].status != SENT)
-					printf("%s (%s)  ", g_data->aprobe, g_data->aprobe);
+					printf("%s (%s)  ", get_hostname(g_data, g_data->aprobe), g_data->aprobe);
 				g_data->cttl = 0;
 				g_data->cprobe++;
 			}
 			else if (ft_strcmp(g_data->aprobe, queries[i].ipv4)) {
 				ft_strncpy(g_data->aprobe, queries[i].ipv4, INET_ADDRSTRLEN);
 				if (queries[i].status != SENT)
-					printf("%s (%s)  ", g_data->aprobe, g_data->aprobe);
+					printf("%s (%s)  ", get_hostname(g_data, g_data->aprobe), g_data->aprobe);
 			}
 			if (g_data->cttl < 3) {
 				print_query(queries[i]);
