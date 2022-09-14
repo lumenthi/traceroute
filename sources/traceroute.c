@@ -52,11 +52,19 @@ int end(t_data *g_data, int code)
 	return code;
 }
 
-int ft_traceroute(char *destination, uint8_t args, char *path)
+int ft_traceroute(char *destination, uint8_t args, char *path, t_data g_data)
 {
-	t_data g_data = {0};
+	if (args == ARGS_INVALID) {
+		fprintf(stderr, "%s: Invalid argument detected\n", path);
+		return print_help();
+	}
 
-	if (!destination || ARGS_H)
+	if (!destination) {
+		fprintf(stderr, "%s: Empty hostname\n", path);
+		return print_help();
+	}
+
+	if (ARGS_H)
 		return print_help();
 
 	if (getuid() != 0) {
@@ -83,7 +91,8 @@ int ft_traceroute(char *destination, uint8_t args, char *path)
 	g_data.sport = 33434; /* Starting port */
 	g_data.port = g_data.sport; /* Port we will increment */
 
-	g_data.sttl = 1; /* Starting ttl */
+	if (!(ARGS_F))
+		g_data.sttl = 1; /* Starting ttl */
 	g_data.ttl = g_data.sttl; /* TTL we will increment */
 
 	g_data.maxfd = 0;

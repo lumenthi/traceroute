@@ -22,12 +22,12 @@ static int send_packet(t_data *g_data, int rsocket)
 	if (setsockopt(rsocket, SOL_IP, IP_TTL, &g_data->ttl,
 		sizeof(g_data->ttl)) != 0) {
 		fprintf(stderr, "Failed to set sender's TTL\n");
-		return -1;
+		return -2;
 	}
 	/* Real traceroute sets no flags in header set IP_PMTUDISC_DONT to allow fragmentation */
 	if (setsockopt(rsocket, IPPROTO_IP, IP_MTU_DISCOVER, &frag, sizeof(frag)) != 0) {
 		fprintf(stderr, "Failed to set sender's fragmentation\n");
-		return -1;
+		return -2;
 	}
 
 	if (sendto(rsocket, buf, sizeof(buf), 0,
@@ -329,7 +329,7 @@ static int print_everything(t_data *g_data)
 	while (i < g_data->tqueries) {
 		if (queries[i].status != DISPLAYED && queries[i].status != NOT_USED) {
 			if (g_data->tprobe != queries[i].ttl) {
-				if (g_data->cprobe != 1)
+				if (g_data->cprobe != g_data->sttl)
 					printf("\n");
 				g_data->tprobe = queries[i].ttl;
 				ft_strncpy(g_data->aprobe, queries[i].ipv4, INET_ADDRSTRLEN);

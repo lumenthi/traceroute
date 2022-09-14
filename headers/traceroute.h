@@ -18,6 +18,8 @@
 #include <netinet/udp.h>
 
 # define ARGS_H args & 0x01
+# define ARGS_F args & 0x02
+# define ARGS_INVALID 0xFF
 
 /* struct sockaddr {
 	ushort	sa_family;
@@ -175,7 +177,8 @@ typedef struct packet {
 }						t_packet;
 
 /* traceroute.c */
-int		ft_traceroute(char *destination, uint8_t args, char *path);
+int		ft_traceroute(char *destination, uint8_t args,
+	char *path, t_data g_data);
 
 /* packet.c */
 void	traceroute_loop(t_data *g_data);
