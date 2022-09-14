@@ -104,17 +104,6 @@ static int queries_informations(t_data *g_data, struct packet full_packet,
 		return -1;
 	}
 
-	/* Debug gathered data */
-	// printf("PID: %d\n", icmp_hdr->un.echo.id);
-	// printf("Source: %d\n", udp_hdr->source);
-	// printf("Index: %d\n", index);
-	// printf("Port: %d\n", port);
-	// printf("Time to live: %d\n", ip_hdr->ttl);
-	// printf("Total queries: %d\n", g_data->tqueries);
-	// printf("Adddr: %s\n", inet_ntoa(((struct sockaddr_in *)&receiver)->sin_addr));
-	// printf("Port: %d\n", ((struct sockaddr_in *)&receiver)->sin_port);
-	// printf("Status: %d\n", icmp_hdr->type);
-
 	ft_strncpy(
 		g_data->queries[index].ipv4,
 		inet_ntoa(receiver->sin_addr),
@@ -168,51 +157,6 @@ static int receive_packet(t_data *g_data, int rsocket)
 	return queries_informations(g_data, rec_packet, (struct sockaddr_in *)&receiver);
 }
 
-static int create_sockets(t_data *g_data)
-{
-	unsigned int i = 0;
-	FD_ZERO(&g_data->udpfds);
-	FD_ZERO(&g_data->icmpfd);
-
-	while (i < g_data->squeries) {
-		/* UDP socket */
-		if ((g_data->udp_sockets[i] = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
-		{
-			fprintf(stderr, "Failed to create sender's socket\n");
-			return -1;
-		}
-		FD_SET(g_data->udp_sockets[i], &g_data->udpfds);
-		g_data->maxfd = g_data->udp_sockets[i] > g_data->maxfd ?
-			g_data->udp_sockets[i] : g_data->maxfd;
-		i++;
-	}
-	/* ICMP socket */
-	if ((g_data->icmp_socket = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
-	{
-		fprintf(stderr, "Failed to create receiver's socket\n");
-		return -1;
-	}
-	FD_SET(g_data->icmp_socket, &g_data->icmpfd);
-	g_data->maxfd = g_data->icmp_socket > g_data->maxfd ?
-		g_data->icmp_socket : g_data->maxfd;
-	return 0;
-}
-
-static void clear_sockets(t_data *g_data)
-{
-	unsigned int i = 0;
-
-	while (i < g_data->squeries) {
-		/* UDP socket */
-		FD_CLR(g_data->udp_sockets[i], &g_data->udpfds);
-		close(g_data->udp_sockets[i]);
-		i++;
-	}
-	/* ICMP socket */
-	FD_CLR(g_data->icmp_socket, &g_data->icmpfd);
-	close(g_data->icmp_socket);
-}
-
 static int	udp_iterate(t_data *g_data)
 {
 	unsigned int i = 0;
@@ -246,7 +190,7 @@ static int	icmp_receive(t_data *g_data)
 	return 0;
 }
 
-static int monitor_packet(t_data *g_data)
+int monitor_packet(t_data *g_data)
 {
 	g_data->drop = 0;
 	g_data->sent = 0;
@@ -254,29 +198,10 @@ static int monitor_packet(t_data *g_data)
 		select(g_data->maxfd+1, NULL, &g_data->udpfds, NULL, &g_data->timeout))
 	{
 		/* TODO: REMOVE UNWANTED COMMENTS */
-		// printf("[*] UDP iteration\n");
 		if (udp_iterate(g_data) < 0)
 			return 1;
 	}
-	// printf("[*] ICMP iteration\n");
 	icmp_receive(g_data);
 
-	// printf("[*] Printing output\n");
 	return print_everything(g_data);
-}
-
-void traceroute_loop(t_data *g_data)
-{
-	int ret = 0;
-
-	printf("traceroute to %s (%s), %d hops max, %ld bytes packets\n",
-		g_data->address, g_data->ipv4, g_data->hops,
-		sizeof(struct iphdr)+sizeof(struct udphdr)+g_data->size);
-
-	if ((create_sockets(g_data)) == -1)
-		return;
-
-	while (!(ret = monitor_packet(g_data)));
-
-	clear_sockets(g_data);
 }

@@ -37,6 +37,67 @@ int end(t_data *g_data, int code)
 	return code;
 }
 
+static void clear_sockets(t_data *g_data)
+{
+	unsigned int i = 0;
+
+	while (i < g_data->squeries) {
+		/* UDP socket */
+		FD_CLR(g_data->udp_sockets[i], &g_data->udpfds);
+		close(g_data->udp_sockets[i]);
+		i++;
+	}
+	/* ICMP socket */
+	FD_CLR(g_data->icmp_socket, &g_data->icmpfd);
+	close(g_data->icmp_socket);
+}
+
+static int create_sockets(t_data *g_data)
+{
+	unsigned int i = 0;
+	FD_ZERO(&g_data->udpfds);
+	FD_ZERO(&g_data->icmpfd);
+
+	while (i < g_data->squeries) {
+		/* UDP socket */
+		if ((g_data->udp_sockets[i] = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
+		{
+			fprintf(stderr, "Failed to create sender's socket\n");
+			return -1;
+		}
+		FD_SET(g_data->udp_sockets[i], &g_data->udpfds);
+		g_data->maxfd = g_data->udp_sockets[i] > g_data->maxfd ?
+			g_data->udp_sockets[i] : g_data->maxfd;
+		i++;
+	}
+	/* ICMP socket */
+	if ((g_data->icmp_socket = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
+	{
+		fprintf(stderr, "Failed to create receiver's socket\n");
+		return -1;
+	}
+	FD_SET(g_data->icmp_socket, &g_data->icmpfd);
+	g_data->maxfd = g_data->icmp_socket > g_data->maxfd ?
+		g_data->icmp_socket : g_data->maxfd;
+	return 0;
+}
+
+static void traceroute_loop(t_data *g_data)
+{
+	int ret = 0;
+
+	printf("traceroute to %s (%s), %d hops max, %ld bytes packets\n",
+		g_data->address, g_data->ipv4, g_data->hops,
+		sizeof(struct iphdr)+sizeof(struct udphdr)+g_data->size);
+
+	if ((create_sockets(g_data)) == -1)
+		return;
+
+	while (!(ret = monitor_packet(g_data)));
+
+	clear_sockets(g_data);
+}
+
 int ft_traceroute(char *destination, uint8_t args, char *path, t_data g_data)
 {
 	if (!destination) {

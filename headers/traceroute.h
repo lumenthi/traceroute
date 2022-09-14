@@ -191,6 +191,6 @@ int		print_help();
 int		print_everything(t_data *g_data);
 
 /* packet.c */
-void	traceroute_loop(t_data *g_data);
+int		monitor_packet(t_data *g_data);
 
 #endif
