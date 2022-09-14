@@ -338,15 +338,23 @@ static int print_everything(t_data *g_data)
 					printf(" %d  ", g_data->cprobe);
 				else
 					printf("%d  ", g_data->cprobe);
-				if (queries[i].status != SENT)
-					printf("%s (%s) ", get_hostname(g_data, g_data->aprobe), g_data->aprobe);
+				if (queries[i].status != SENT) {
+					if (g_data->args & 0x10)
+						printf("%s ", g_data->aprobe);
+					else
+						printf("%s (%s) ", get_hostname(g_data, g_data->aprobe), g_data->aprobe);
+				}
 				g_data->cttl = 0;
 				g_data->cprobe++;
 			}
 			else if (ft_strcmp(g_data->aprobe, queries[i].ipv4)) {
 				ft_strncpy(g_data->aprobe, queries[i].ipv4, INET_ADDRSTRLEN);
-				if (queries[i].status != SENT)
-					printf("%s (%s) ", get_hostname(g_data, g_data->aprobe), g_data->aprobe);
+				if (queries[i].status != SENT) {
+					if (g_data->args & 0x10)
+						printf("%s ", g_data->aprobe);
+					else
+						printf("%s (%s) ", get_hostname(g_data, g_data->aprobe), g_data->aprobe);
+				}
 			}
 			if (g_data->cttl < 3) {
 				print_query(queries[i], g_data->cttl);

@@ -118,6 +118,8 @@ int ft_traceroute(char *destination, uint8_t args, char *path, t_data g_data)
 		return 1;
 	}
 
+	g_data.args = args; /* Assigning args */
+
 	g_data.udp_sockets = (int *)malloc(sizeof(int) * g_data.squeries);
 	g_data.queries = (t_query *)malloc(sizeof(t_query) * (g_data.tqueries));
 	ft_memset(g_data.queries, 0, sizeof(t_query) * (g_data.tqueries));
