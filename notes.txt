@@ -105,3 +105,6 @@ latency ?
 Parallel packets handling ?
 
 allowed functions check
+
+= SQUERIES CHECK =
+sudo strace ./ft_traceroute www.baidu.com -N 3 -m 5 2>&1 | grep "sendto\|recvfrom"

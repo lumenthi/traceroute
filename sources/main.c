@@ -37,7 +37,7 @@ static int get_N(int argc, char **argv, t_data *g_data, int i)
 	if (i+1 < argc) {
 		g_data->squeries = ft_atoi(argv[i+1]);
 		/* TODO: Set a positive value limit */
-		if (g_data->squeries < 1 || g_data->squeries > 255) {
+		if (g_data->squeries < 1 || g_data->squeries > 100) {
 			fprintf(stderr, "%s: Invalid value for <squeries>\n", argv[0]);
 			return 0;
 		}

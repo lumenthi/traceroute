@@ -113,7 +113,7 @@ static int queries_informations(t_data *g_data, struct packet full_packet,
 	/* Invalid packet */
 	if (index >= g_data->tqueries) {
 		// printf("[*] Dropping packet\n");
-		return 0;
+		return -1;
 	}
 
 	/* Debug gathered data */
@@ -141,7 +141,7 @@ static int queries_informations(t_data *g_data, struct packet full_packet,
 		g_data->reached = 1;
 	}
 
-	return 0;
+	return 1;
 }
 
 static int receive_packet(t_data *g_data, int rsocket)
@@ -172,12 +172,10 @@ static int receive_packet(t_data *g_data, int rsocket)
 	{
 		/* Packet timed out, drop next incoming packets */
 		g_data->drop = 1;
-		return -1;
+		return 1;
 	}
 
-	queries_informations(g_data, rec_packet, (struct sockaddr_in *)&receiver);
-
-	return 0;
+	return queries_informations(g_data, rec_packet, (struct sockaddr_in *)&receiver);
 }
 
 static int create_sockets(t_data *g_data)
@@ -246,10 +244,12 @@ static int	udp_iterate(t_data *g_data)
 static int	icmp_receive(t_data *g_data)
 {
 	unsigned int i = 0;
+	unsigned int rec = 0;
 
 	if (FD_ISSET(g_data->icmp_socket, &g_data->icmpfd)) {
 		while (i < g_data->sent) {
-			receive_packet(g_data, g_data->icmp_socket);
+			if (receive_packet(g_data, g_data->icmp_socket) > 0)
+				rec++;
 			i++;
 		}
 	}
