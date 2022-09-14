@@ -34,8 +34,8 @@ int print_help()
 		"  -m <max_ttl>       Set the max number of hops (default is 30) [1-255]\n"
 		"  -N <squeries>      Set the number of probes to be tried simultaneously (default is 16) [1-100]\n"
 		"  -n                 Do not resolve IP addresses to their domain names\n"
-		"  -p <port>          Set the destination port to use (default is 33434)\n"
-		"  -q <nqueries>      Set the number of probes per each hop (default is 3)\n");
+		"  -p <port>          Set the destination port to use (default is 33434) [1-65535]\n"
+		"  -q <nqueries>      Set the number of probes per each hop (default is 3) [1-10]\n");
 	return 1;
 }
 
@@ -75,12 +75,16 @@ int ft_traceroute(char *destination, uint8_t args, char *path, t_data g_data)
 	if (!(ARGS_m))
 		g_data.hops = 30; /* 30 */
 
-	g_data.sport = 33434; /* Starting port */
+	if (!(ARGS_p))
+		g_data.sport = 33434; /* Starting port */
 	g_data.port = g_data.sport; /* Port we will increment */
 
 	if (!(ARGS_f))
 		g_data.sttl = 1; /* Starting ttl */
 	g_data.ttl = g_data.sttl; /* TTL we will increment */
+
+	if (!(ARGS_q))
+		g_data.probe = 3; /* Default probe per hop */
 
 	if (g_data.hops < g_data.ttl) {
 		fprintf(stderr, "%s: First hop out of range\n", path);
@@ -88,7 +92,7 @@ int ft_traceroute(char *destination, uint8_t args, char *path, t_data g_data)
 	}
 
 	/* Total queries */
-	g_data.tqueries = ((g_data.hops-g_data.sttl+1) * 3);
+	g_data.tqueries = ((g_data.hops-g_data.sttl+1) * g_data.probe);
 
 	/* Simultaneous queries calculation */
 	if (!(ARGS_N))

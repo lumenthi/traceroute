@@ -22,6 +22,8 @@
 # define ARGS_m args & 0x04
 # define ARGS_N args & 0x08
 # define ARGS_n args & 0x10
+# define ARGS_p args & 0x20
+# define ARGS_q args & 0x40
 # define ARGS_INVALID 0xFF
 
 /* struct sockaddr {
@@ -85,6 +87,7 @@ typedef struct	s_data {
 	unsigned int		tqueries; /* Total queries */
 	unsigned int		ttl;
 	unsigned int		sttl;
+	unsigned int		probe;
 	unsigned int		port;
 	unsigned int		sport;
 	unsigned int		sent;

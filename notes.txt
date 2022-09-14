@@ -108,3 +108,13 @@ allowed functions check
 
 = SQUERIES CHECK =
 sudo strace ./ft_traceroute www.baidu.com -N 3 -m 5 2>&1 | grep "sendto\|recvfrom"
+
+= PORT HANDLING =
+vagrant@stretch:/vagrant$ sudo strace traceroute www.google.com -p 65535 2>&1 | grep connect
+[...]
+connect(3, {sa_family=AF_INET, sin_port=htons(65535), sin_addr=inet_addr("216.58.213.68")}, 28) = 0
+connect(4, {sa_family=AF_INET, sin_port=htons(0), sin_addr=inet_addr("216.58.213.68")}, 28) = 0
+connect(5, {sa_family=AF_INET, sin_port=htons(1), sin_addr=inet_addr("216.58.213.68")}, 28) = 0
+connect(6, {sa_family=AF_INET, sin_port=htons(2), sin_addr=inet_addr("216.58.213.68")}, 28) = 0
+connect(7, {sa_family=AF_INET, sin_port=htons(3), sin_addr=inet_addr("216.58.213.68")}, 28) = 0
+[...]

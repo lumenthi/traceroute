@@ -18,6 +18,12 @@ static int send_packet(t_data *g_data, int rsocket)
 	g_data->servaddr.sin_port = htons(g_data->port);
 	g_data->host_addr = (struct sockaddr *)&g_data->servaddr;
 
+	/* Check port */
+	if (g_data->port > USHRT_MAX) {
+		printf("\nStarting port is too high, can't go further\n");
+		return -2;
+	}
+
 	/* Set packet's TTL */
 	if (setsockopt(rsocket, SOL_IP, IP_TTL, &g_data->ttl,
 		sizeof(g_data->ttl)) != 0) {
@@ -111,12 +117,14 @@ static int queries_informations(t_data *g_data, struct packet full_packet,
 
 	index = get_packet_index(g_data->queries, port, g_data->tqueries);
 	/* Invalid packet */
-	if (index >= g_data->tqueries) {
+	if (index >= g_data->tqueries || g_data->queries[index].status != SENT) {
 		// printf("[*] Dropping packet\n");
 		return -1;
 	}
 
 	/* Debug gathered data */
+	// printf("PID: %d\n", icmp_hdr->un.echo.id);
+	// printf("Source: %d\n", udp_hdr->source);
 	// printf("Index: %d\n", index);
 	// printf("Port: %d\n", port);
 	// printf("Time to live: %d\n", ip_hdr->ttl);
@@ -233,7 +241,7 @@ static int	udp_iterate(t_data *g_data)
 			if (send_packet(g_data, g_data->udp_sockets[i]) == -2)
 				return -1;
 			g_data->port++;
-			g_data->ttl = g_data->sttl + ((CURRENT_QUERY) / 3);
+			g_data->ttl = g_data->sttl + ((CURRENT_QUERY) / g_data->probe);
 			g_data->sent++;
 		}
 		i++;
@@ -247,7 +255,7 @@ static int	icmp_receive(t_data *g_data)
 	unsigned int rec = 0;
 
 	if (FD_ISSET(g_data->icmp_socket, &g_data->icmpfd)) {
-		while (i < g_data->sent) {
+		while (rec < g_data->sent) {
 			if (receive_packet(g_data, g_data->icmp_socket) > 0)
 				rec++;
 			i++;
@@ -278,7 +286,7 @@ static void sort_queries(t_data *g_data)
 	}
 }
 
-static void print_query(t_query querry, unsigned counter)
+static void print_query(t_query querry, unsigned int counter, unsigned int probe)
 {
 	long int sec = querry.end_time.tv_sec - querry.start_time.tv_sec;
 	long int usec = querry.end_time.tv_usec - querry.start_time.tv_usec;
@@ -289,12 +297,12 @@ static void print_query(t_query querry, unsigned counter)
 
 	if (querry.status == SENT) {
 		printf("*");
-		if (counter < 2)
+		if (counter < probe-1)
 			printf(" ");
 	}
 	else {
 		printf(" %lld.%03lld ms", total_usec/1000, total_usec%1000);
-		if (counter < 2)
+		if (counter < probe-1)
 			printf(" ");
 	}
 }
@@ -356,9 +364,9 @@ static int print_everything(t_data *g_data)
 						printf("%s (%s) ", get_hostname(g_data, g_data->aprobe), g_data->aprobe);
 				}
 			}
-			if (g_data->cttl < 3) {
-				print_query(queries[i], g_data->cttl);
-				if (queries[i].status == RECEIVED_END && g_data->cttl == 2) {
+			if (g_data->cttl < g_data->probe) {
+				print_query(queries[i], g_data->cttl, g_data->probe);
+				if (queries[i].status == RECEIVED_END && g_data->cttl == g_data->probe-1) {
 					printf("\n");
 					return 1;
 				}
