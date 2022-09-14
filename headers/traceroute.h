@@ -17,8 +17,9 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/udp.h>
 
-# define ARGS_H args & 0x01
-# define ARGS_F args & 0x02
+# define ARGS_h args & 0x01
+# define ARGS_f args & 0x02
+# define ARGS_m args & 0x04
 # define ARGS_INVALID 0xFF
 
 /* struct sockaddr {
@@ -177,6 +178,7 @@ typedef struct packet {
 }						t_packet;
 
 /* traceroute.c */
+int		print_help();
 int		ft_traceroute(char *destination, uint8_t args,
 	char *path, t_data g_data);
 

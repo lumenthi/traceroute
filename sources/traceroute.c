@@ -29,9 +29,9 @@ int print_help()
 	printf("Usage\n"
 		"  traceroute [options] <destination>\n\n"
 		"Options:\n"
-		"  -f <first_ttl>     Start from the first_ttl hop (default is 1)\n"
+		"  -f <first_ttl>     Start from the first_ttl hop (default is 1) [1-250]\n"
 		"  -h                 print help and exit\n"
-		"  -m <max_ttl>       Set the max number of hops (default is 30)\n"
+		"  -m <max_ttl>       Set the max number of hops (default is 30) [1-255]\n"
 		"  -N <squeries>      Set the number of probes to be tried simultaneously (default is 16)\n"
 		"  -n                 Do not resolve IP addresses to their domain names\n"
 		"  -p <port>          Set the destination port to use (default is 33434)\n"
@@ -64,36 +64,37 @@ int ft_traceroute(char *destination, uint8_t args, char *path, t_data g_data)
 		return print_help();
 	}
 
-	if (ARGS_H)
+	if (ARGS_h)
 		return print_help();
 
-	if (getuid() != 0) {
-		fprintf(stderr, "%s: %s: Not allowed to create raw sockets, run as root\n",
-			path, destination);
-		return 1;
-	}
 
 	/* Options */
 	g_data.path = path;
 	g_data.args = args;
 	g_data.address = destination;
 	g_data.size = 32; /* Packet's content size */
-	g_data.hops = 30; /* 30 */
+	if (!(ARGS_m))
+		g_data.hops = 30; /* 30 */
+
+	g_data.sport = 33434; /* Starting port */
+	g_data.port = g_data.sport; /* Port we will increment */
+
+	if (!(ARGS_f))
+		g_data.sttl = 1; /* Starting ttl */
+	g_data.ttl = g_data.sttl; /* TTL we will increment */
+
+	if (g_data.hops < g_data.ttl) {
+		fprintf(stderr, "%s: First hop out of range\n", path);
+		return 1;
+	}
 
 	/* Total queries */
-	g_data.tqueries = g_data.hops * 3;
+	g_data.tqueries = ((g_data.hops-g_data.sttl) * 3) + 1;
 
 	/* Simultaneous queries calculation */
 	g_data.squeries = 16; /* 16 */
 	g_data.squeries = g_data.tqueries < g_data.squeries ?
 		g_data.tqueries : g_data.squeries;
-
-	g_data.sport = 33434; /* Starting port */
-	g_data.port = g_data.sport; /* Port we will increment */
-
-	if (!(ARGS_F))
-		g_data.sttl = 1; /* Starting ttl */
-	g_data.ttl = g_data.sttl; /* TTL we will increment */
 
 	g_data.maxfd = 0;
 	g_data.host_info = NULL;
@@ -110,6 +111,12 @@ int ft_traceroute(char *destination, uint8_t args, char *path, t_data g_data)
 	g_data.timeout.tv_usec = 0;
 
 	/* printf("Simultaneous queries: %d\n", g_data.squeries); */
+
+	if (getuid() != 0) {
+		fprintf(stderr, "%s: %s: Not allowed to create raw sockets, run as root\n",
+			path, destination);
+		return 1;
+	}
 
 	g_data.udp_sockets = (int *)malloc(sizeof(int) * g_data.squeries);
 	g_data.queries = (t_query *)malloc(sizeof(t_query) * (g_data.tqueries));
