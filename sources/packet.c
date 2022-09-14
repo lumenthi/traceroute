@@ -285,6 +285,8 @@ static void print_query(t_query querry, unsigned counter)
 
 	long long total_usec = sec*1000000+usec;
 
+	// printf("[*] Print query");
+
 	if (querry.status == SENT) {
 		printf("*");
 		if (counter < 2)
@@ -322,7 +324,6 @@ static int print_everything(t_data *g_data)
 	unsigned int i = 0;
 
 	(void)debug_queries;
-	(void)sort_queries;
 	sort_queries(g_data);
 	// debug_queries(g_data->queries, g_data->tqueries);
 
@@ -382,6 +383,7 @@ static int monitor_packet(t_data *g_data)
 	// printf("[*] ICMP iteration\n");
 	icmp_receive(g_data);
 
+	// printf("[*] Printing output\n");
 	return print_everything(g_data);
 }
 

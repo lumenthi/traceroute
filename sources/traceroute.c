@@ -67,7 +67,6 @@ int ft_traceroute(char *destination, uint8_t args, char *path, t_data g_data)
 	if (ARGS_h)
 		return print_help();
 
-
 	/* Options */
 	g_data.path = path;
 	g_data.args = args;
@@ -89,10 +88,11 @@ int ft_traceroute(char *destination, uint8_t args, char *path, t_data g_data)
 	}
 
 	/* Total queries */
-	g_data.tqueries = ((g_data.hops-g_data.sttl) * 3) + 1;
+	g_data.tqueries = ((g_data.hops-g_data.sttl+1) * 3);
 
 	/* Simultaneous queries calculation */
-	g_data.squeries = 16; /* 16 */
+	if (!(ARGS_N))
+		g_data.squeries = 16; /* 16 */
 	g_data.squeries = g_data.tqueries < g_data.squeries ?
 		g_data.tqueries : g_data.squeries;
 

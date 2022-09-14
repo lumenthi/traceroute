@@ -3,7 +3,6 @@
 static int get_f(int argc, char **argv, t_data *g_data, int i)
 {
 	if (i+1 < argc) {
-		/* TODO: Negative/Too big value check */
 		g_data->sttl = ft_atoi(argv[i+1]);
 		if (g_data->sttl < 1 || g_data->sttl > 250) {
 			fprintf(stderr, "%s: Invalid value for <first_ttl>\n", argv[0]);
@@ -20,7 +19,6 @@ static int get_f(int argc, char **argv, t_data *g_data, int i)
 static int get_m(int argc, char **argv, t_data *g_data, int i)
 {
 	if (i+1 < argc) {
-		/* TODO: Negative/Too big value check */
 		g_data->hops = ft_atoi(argv[i+1]);
 		if (g_data->hops < 1 || g_data->hops > 255) {
 			fprintf(stderr, "%s: Invalid value for <max_ttl>\n", argv[0]);
@@ -29,6 +27,23 @@ static int get_m(int argc, char **argv, t_data *g_data, int i)
 	}
 	else {
 		fprintf(stderr, "%s: Empty value for <max_ttl>\n", argv[0]);
+		return 0;
+	}
+	return 1;
+}
+
+static int get_N(int argc, char **argv, t_data *g_data, int i)
+{
+	if (i+1 < argc) {
+		g_data->squeries = ft_atoi(argv[i+1]);
+		/* TODO: Set a positive value limit */
+		if (g_data->squeries < 1 || g_data->squeries > 255) {
+			fprintf(stderr, "%s: Invalid value for <squeries>\n", argv[0]);
+			return 0;
+		}
+	}
+	else {
+		fprintf(stderr, "%s: Empty value for <squeries>\n", argv[0]);
 		return 0;
 	}
 	return 1;
@@ -58,6 +73,12 @@ static int get_args(int argc, char **argv, uint8_t *args, t_data *g_data)
 				else if (argv[i][j] == 'm') {
 					(*args) |= 0x04; // 0000 0100
 					if (!get_m(argc, argv, g_data, i))
+						return -1;
+					next = 1;
+				}
+				else if (argv[i][j] == 'N') {
+					(*args) |= 0x08; // 0000 1000
+					if (!get_N(argc, argv, g_data, i))
 						return -1;
 					next = 1;
 				}
