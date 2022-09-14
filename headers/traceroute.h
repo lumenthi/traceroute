@@ -183,9 +183,12 @@ typedef struct packet {
 }						t_packet;
 
 /* traceroute.c */
-int		print_help();
 int		ft_traceroute(char *destination, uint8_t args,
 	char *path, t_data g_data);
+
+/* print.c */
+int		print_help();
+int		print_everything(t_data *g_data);
 
 /* packet.c */
 void	traceroute_loop(t_data *g_data);

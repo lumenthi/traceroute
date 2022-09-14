@@ -69,7 +69,6 @@ static int get_q(int argc, char **argv, t_data *g_data, int i)
 {
 	if (i+1 < argc) {
 		g_data->probe = ft_atoi(argv[i+1]);
-		/* TODO: Set a positive value limit */
 		if (g_data->probe < 1 || g_data->probe > 10) {
 			fprintf(stderr, "%s: Invalid value for <nqueries>\n", argv[0]);
 			return 0;
@@ -129,9 +128,10 @@ static int get_args(int argc, char **argv, uint8_t *args, t_data *g_data)
 						return -1;
 					next = 1;
 				}
-
-				else if (argv[i][j] != '-')
+				else if (argv[i][j] != '-') {
 					(*args) = ARGS_INVALID;
+					return -1;
+				}
 				j++;
 			}
 		}
@@ -150,6 +150,12 @@ int main(int argc, char **argv)
 	t_data g_data = {0};
 
 	arg_index = get_args(argc, argv, &args, &g_data);
+	if (args == ARGS_INVALID) {
+		fprintf(stderr, "%s: Invalid argument detected\n", argv[0]);
+		return print_help();
+	}
+	if (ARGS_h)
+		return print_help();
 	if (arg_index < 0)
 		return print_help();
 	if (arg_index > 0)

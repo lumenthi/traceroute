@@ -24,21 +24,6 @@ static int resolve(char *host, t_data *g_data)
 	return 0;
 }
 
-int print_help()
-{
-	printf("Usage\n"
-		"  traceroute [options] <destination>\n\n"
-		"Options:\n"
-		"  -f <first_ttl>     Start from the first_ttl hop (default is 1) [1-250]\n"
-		"  -h                 print help and exit\n"
-		"  -m <max_ttl>       Set the max number of hops (default is 30) [1-255]\n"
-		"  -N <squeries>      Set the number of probes to be tried simultaneously (default is 16) [1-100]\n"
-		"  -n                 Do not resolve IP addresses to their domain names\n"
-		"  -p <port>          Set the destination port to use (default is 33434) [1-65535]\n"
-		"  -q <nqueries>      Set the number of probes per each hop (default is 3) [1-10]\n");
-	return 1;
-}
-
 int end(t_data *g_data, int code)
 {
 	/* Freeing stuff */
@@ -54,18 +39,10 @@ int end(t_data *g_data, int code)
 
 int ft_traceroute(char *destination, uint8_t args, char *path, t_data g_data)
 {
-	if (args == ARGS_INVALID) {
-		fprintf(stderr, "%s: Invalid argument detected\n", path);
-		return print_help();
-	}
-
 	if (!destination) {
 		fprintf(stderr, "%s: Empty hostname\n", path);
 		return print_help();
 	}
-
-	if (ARGS_h)
-		return print_help();
 
 	/* Options */
 	g_data.path = path;
