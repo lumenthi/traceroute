@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   packet.c                                           :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: lumenthi <lumenthi@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2022/09/15 10:00:10 by lumenthi          #+#    #+#             */
+/*   Updated: 2022/09/15 10:00:15 by lumenthi         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "traceroute.h"
 
 static int send_packet(t_data *g_data, int rsocket)
@@ -30,7 +42,7 @@ static int send_packet(t_data *g_data, int rsocket)
 		fprintf(stderr, "Failed to set sender's TTL\n");
 		return -2;
 	}
-	/* Real traceroute sets no flags in header set IP_PMTUDISC_DONT to allow fragmentation */
+	/* Real traceroute sets IP_PMTUDISC_DONT to allow fragmentation */
 	if (setsockopt(rsocket, IPPROTO_IP, IP_MTU_DISCOVER, &frag, sizeof(frag)) != 0) {
 		fprintf(stderr, "Failed to set sender's fragmentation\n");
 		return -2;
@@ -42,9 +54,6 @@ static int send_packet(t_data *g_data, int rsocket)
 		fprintf(stderr, "Failed to send packet\n");
 		return -2;
 	}
-
-	// printf("[*] Sending: Index: %d\n", CURRENT_QUERY);
-	// printf("[*] Sending: Max Index: %d\n", g_data->tqueries);
 
 	g_data->queries[CURRENT_QUERY].port = g_data->port;
 	g_data->queries[CURRENT_QUERY].ttl = g_data->ttl;
@@ -100,7 +109,7 @@ static int queries_informations(t_data *g_data, struct packet full_packet,
 	index = get_packet_index(g_data->queries, port, g_data->tqueries);
 	/* Invalid packet */
 	if (index >= g_data->tqueries || g_data->queries[index].status != SENT) {
-		// printf("[*] Dropping packet\n");
+		/* Dropping packet */
 		return -1;
 	}
 
@@ -197,7 +206,6 @@ int monitor_packet(t_data *g_data)
 	if (CURRENT_QUERY < g_data->tqueries && !g_data->reached &&
 		select(g_data->maxfd+1, NULL, &g_data->udpfds, NULL, &g_data->timeout))
 	{
-		/* TODO: REMOVE UNWANTED COMMENTS */
 		if (udp_iterate(g_data) < 0)
 			return 1;
 	}

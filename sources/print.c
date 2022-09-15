@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   print.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: lumenthi <lumenthi@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2022/09/15 10:00:29 by lumenthi          #+#    #+#             */
+/*   Updated: 2022/09/15 10:00:31 by lumenthi         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "traceroute.h"
 
 int print_help()
@@ -63,8 +75,6 @@ static void print_query(t_query querry, unsigned int counter, unsigned int probe
 
 	long long total_usec = sec*1000000+usec;
 
-	// printf("[*] Print query");
-
 	if (querry.status == SENT) {
 		printf("*");
 		if (counter < probe-1)
@@ -125,7 +135,6 @@ int print_everything(t_data *g_data)
 		}
 		i++;
 	}
-	/* TODO: Remove void casts */
 	if (CURRENT_QUERY >= g_data->tqueries || g_data->reached) {
 		printf("\n");
 		return 1;

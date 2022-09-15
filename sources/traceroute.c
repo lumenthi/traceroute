@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   traceroute.c                                       :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: lumenthi <lumenthi@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2022/09/15 10:00:35 by lumenthi          #+#    #+#             */
+/*   Updated: 2022/09/15 10:00:36 by lumenthi         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "traceroute.h"
 
 static int resolve(char *host, t_data *g_data)
@@ -10,7 +22,7 @@ static int resolve(char *host, t_data *g_data)
 	hints.ai_socktype = SOCK_DGRAM;
 	hints.ai_protocol = IPPROTO_UDP;
 
-	/* subject to any restrictions imposed by hints */
+	/* Subject to any restrictions imposed by hints */
 	if (getaddrinfo(host, NULL, &hints, &g_data->host_info) == -1 ||
 		g_data->host_info == NULL)
 		return 1;
@@ -24,7 +36,7 @@ static int resolve(char *host, t_data *g_data)
 	return 0;
 }
 
-int end(t_data *g_data, int code)
+static int end(t_data *g_data, int code)
 {
 	/* Freeing stuff */
 	if (g_data->udp_sockets)
@@ -151,8 +163,6 @@ int ft_traceroute(char *destination, uint8_t args, char *path, t_data g_data)
 	/* Default timeout for a query (5 seconds) */
 	g_data.timeout.tv_sec = 5;
 	g_data.timeout.tv_usec = 0;
-
-	/* printf("Simultaneous queries: %d\n", g_data.squeries); */
 
 	if (getuid() != 0) {
 		fprintf(stderr, "%s: %s: Not allowed to create raw sockets, run as root\n",

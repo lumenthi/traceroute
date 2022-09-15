@@ -96,16 +96,6 @@ When an error occurs (ex: TTL expired) the icmp protocol sends back an icmp pack
 
 - Map IP addresses (Resolve)
 
-= TODO =
-
-www.baidu.com
-
-latency ?
-
-Parallel packets handling ?
-
-allowed functions check
-
 = SQUERIES CHECK =
 sudo strace ./ft_traceroute www.baidu.com -N 3 -m 5 2>&1 | grep "sendto\|recvfrom"
 
